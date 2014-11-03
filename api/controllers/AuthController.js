@@ -323,7 +323,7 @@ module.exports = {
           }
           req.user = newUser;
 
-          if(requireAccountActivation){
+          if (requireAccountActivation) {
             return EmailService.sendAccontActivationEmail(newUser, req.baseUrl , function(err){
               if(err) {
                 sails.log.error('Action:Login sendAccontActivationEmail:', err);
@@ -344,6 +344,14 @@ module.exports = {
 
               res.locals.user = newUser;
               return res.view('auth/requires-email-validation');
+            });
+          } else {
+            req.logIn(newUser, function(err){
+              if (err) {
+                sails.log.error('Error on login user after register', usr);
+                return res.serverError(err);
+              }
+              res.redirect('/');
             });
           }
         });
