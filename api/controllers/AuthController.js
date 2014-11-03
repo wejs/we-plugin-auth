@@ -92,14 +92,26 @@ module.exports = {
 
     })
   },
+
   // Signup method GET function
   signupPage: function (req, res) {
-    // return index page and let angular.js construct the page
-    res.view('home/index');
+    // log out user if it access register page
+    req.logout();
+    setDefaultRegisterLocals(req, res);
+    res.view('auth/register');
   },
 
   // Signup method POST function
   signup: function (req, res) {
+    var sails = req._sails;
+    var User = sails.models.user;
+
+    // if dont wants json respond it with static signup function
+    // TODO change this code to use sails.js 0.10.X custom respose feature
+    if (! req.wantsJSON) {
+      return sails.controllers.auth.staticPostSignup(req, res);
+    }
+
     var requireAccountActivation = false;
     var user = {};
     user.displayName = req.param('displayName');
@@ -108,7 +120,6 @@ module.exports = {
     user.password = req.param('password');
     user.language = req.param('language');
 
-
     if( !_.isUndefined(sails.config.site) ){
       if ( !sails.util.isUndefined( sails.config.site.requireAccountActivation ) ){
         requireAccountActivation = sails.config.site.requireAccountActivation;
@@ -116,7 +127,7 @@ module.exports = {
     }
 
     // if dont need a account activation email then create a active user
-    if(!requireAccountActivation){
+    if (!requireAccountActivation) {
       user.active = true;
     }
 
@@ -125,7 +136,7 @@ module.exports = {
 
     errors = validSignup(user, confirmPassword, res);
 
-    if( ! _.isEmpty(errors) ){
+    if ( ! _.isEmpty(errors) ) {
       // error on data or confirm password
       return res.send('400',{
         'error': 'E_VALIDATION',
@@ -136,7 +147,7 @@ module.exports = {
       });
     }
 
-    User.findOneByEmail(user.email).exec(function(err, usr){
+    User.findOneByEmail(user.email).exec(function (err, usr){
       if (err) {
         sails.log.error('Error on find user by email.',err);
         return res.send(500, { error: res.i18n('Error') });
@@ -160,69 +171,185 @@ module.exports = {
       }
 
       User.create(user).exec(function (error, newUser) {
-          if (error) {
-             if(error.ValidationError) {
+        if (error) {
+           if(error.ValidationError) {
 
+            if(
+              error.ValidationError &&
+              error.invalidAttributes
+            ) {
               if(
-                error.ValidationError &&
-                error.invalidAttributes
+                error.invalidAttributes.username ||
+                error.invalidAttributes.email
               ) {
-                if(
-                  error.invalidAttributes.username ||
-                  error.invalidAttributes.email
-                ) {
-                  return res.send('400',{
-                    'error': 'E_VALIDATION',
-                    'status': 400,
-                    'summary': 'Validation errors',
-                    'model': 'User',
-                    'invalidAttributes': {
-                      username: [{
-                        message: res.i18n('auth.register.error.emailOrUsername.ivalid')
-                      }]
-                    }
-                  });
-                }
-              }
-
-              return res.send(400, error);
-            }
-
-            sails.log.error('signup:User.create:Error on create user', error);
-            return res.serverError();
-          }
-
-          if(requireAccountActivation) {
-            return EmailService.sendAccontActivationEmail(newUser, req.baseUrl , function(err){
-              if(err) {
-                sails.log.error('Action:Login sendAccontActivationEmail:',err);
-                return res.serverError('Error on send activation email for new user',newUser);
-              }
-
-              res.send('201',{
-                success: [
-                  {
-                    status: 'warning',
-                    message: res.i18n('Account created but is need an email validation\n, One email was send to %s with instructions to validate your account', newUser.email)
+                return res.send('400',{
+                  'error': 'E_VALIDATION',
+                  'status': 400,
+                  'summary': 'Validation errors',
+                  'model': 'User',
+                  'invalidAttributes': {
+                    username: [{
+                      message: res.i18n('auth.register.error.emailOrUsername.ivalid')
+                    }]
                   }
-                ]
-              });
-
-            });
-          }
-
-          req.logIn(newUser, function(err){
-            if(err){
-              sails.log.error('logIn error: ', err);
-              return res.negotiate(err);
+                });
+              }
             }
 
-            res.send('201',newUser);
+            return res.send(400, error);
+          }
+
+          sails.log.error('signup:User.create:Error on create user', error);
+          return res.serverError();
+        }
+
+        if (requireAccountActivation) {
+          return EmailService.sendAccontActivationEmail(newUser, req.baseUrl , function(err){
+            if(err) {
+              sails.log.error('Action:Login sendAccontActivationEmail:',err);
+              return res.serverError('Error on send activation email for new user',newUser);
+            }
+
+            res.send('201',{
+              success: [
+                {
+                  status: 'warning',
+                  message: res.i18n('Account created but is need an email validation\n, One email was send to %s with instructions to validate your account', newUser.email)
+                }
+              ]
+            });
+
           });
+        }
+
+        req.logIn(newUser, function (err) {
+          if (err) {
+            sails.log.error('logIn error: ', err);
+            return res.negotiate(err);
+          }
+
+          res.send('201',newUser);
+        });
       });
 
     });
 
+  },
+
+  /**
+   * Static post signup
+   *
+   */
+  staticPostSignup: function (req, res) {
+
+    var sails = req._sails;
+    var User = sails.models.user;
+
+    setDefaultRegisterLocals(req, res);
+
+    var user = res.locals.user;
+
+    var requireAccountActivation = sails.config.requireAccountActivation;
+    // if dont need a account activation email then create a active user
+    if( requireAccountActivation ){
+      user.active = false;
+    }else{
+      user.active = true;
+    }
+
+    var confirmPassword = req.param('confirmPassword');
+    var errors = validSignup(user, confirmPassword, res);
+
+    if( ! _.isEmpty(errors) ){
+      res.locals.messages = errors;
+      // error on data or confirm password
+      return res.badRequest(errors ,'auth/register');
+    }
+
+    User.findOneByUsername(user.username).exec(function(err, usr){
+      if (err) {
+        sails.log.error('Error on find user by username',err);
+        res.locals.messages = [{
+          status: 'danger',
+          message: res.i18n('auth.register.error.unknow', { email: user.email })
+        }];
+        return res.serverError({}, 'auth/register');
+      }
+
+      // user already registered
+      if ( usr ) {
+        res.locals.messages = [{
+          status: 'danger',
+          message: res.i18n('auth.register.error.username.registered', { username: user.username })
+        }];
+        return res.badRequest({}, 'auth/register');
+      }
+
+      User.findOneByEmail(user.email).exec(function(err, usr){
+        if (err) {
+          sails.log.error('Error on find user by username.',err);
+          res.locals.messages = [{
+            status: 'danger',
+            message: res.i18n('auth.register.error.unknow', { email: user.email })
+          }];
+          return res.serverError({}, 'auth/register');
+        }
+
+        // user already registered
+        if ( usr ) {
+          res.locals.messages = [{
+            status: 'danger',
+            message: res.i18n('auth.register.error.email.registered', { email: user.email })
+          }];
+          return res.badRequest({}, 'auth/register');
+        }
+
+        User.create(user).exec(function(error, newUser) {
+          if (error) {
+            if(error.ValidationError){
+              // wrong email format
+              if(error.ValidationError.email || error.ValidationError.username){
+                res.locals.messages = [{
+                  status: 'danger',
+                  message: res.i18n('auth.register.error.emailOrUsername.ivalid', { email: user.email })
+                }];
+                return res.badRequest({}, 'auth/register');
+              }
+            }else {
+              return res.send(500, {
+                error: res.i18n('DB Error')
+              });
+            }
+          }
+          req.user = newUser;
+
+          if(requireAccountActivation){
+            return EmailService.sendAccontActivationEmail(newUser, req.baseUrl , function(err){
+              if(err) {
+                sails.log.error('Action:Login sendAccontActivationEmail:', err);
+                res.locals.messages = [{
+                  status: 'danger',
+                  message: res.i18n('auth.register.send.email.error', { email: newUser.email })
+                }];
+                return res.serverError(newUser, 'auth/register');
+              }
+              if (res.wantsJSON) {
+                return res.send('201',{
+                  success: [{
+                    status: 'warning',
+                    message: res.i18n('Account created but is need an email validation\n, One email was send to %s with instructions to validate your account', newUser.email)
+                  }]
+                });
+              }
+
+              res.locals.user = newUser;
+              return res.view('auth/requires-email-validation');
+            });
+          }
+        });
+
+      });
+    });
   },
 
   /**
@@ -234,9 +361,85 @@ module.exports = {
     res.redirect('/');
   },
 
-  login: function (req, res, next) {
+  loginPage: function (req, res) {
+    res.locals.messages = [];
+    res.locals.user = {};
+
+    res.view('auth/login');
+  },
+
+  staticPostLogin: function (req, res) {
+    var sails = req._sails;
+    var User = sails.models.user;
+
     var email = req.param('email');
     var password = req.param('password');
+
+    res.locals.messages = [];
+    res.locals.user = {};
+    res.locals.service = req.param('service');
+    // TODO add suport to consumers
+    res.locals.consumerId = req.param('consumerId');
+
+    if (!email || !password) {
+      sails.log.debug('AuthController:login:Password and email is required', email);
+      res.locals.messages = [{
+        status: 'danger',
+        message: res.i18n('auth.login.password.and.email.required', { email: email })
+      }];
+      return res.serverError({} ,'auth/login');
+    }
+
+    User.findOneByEmail(email).exec(function(err, usr) {
+      if (err) {
+        sails.log.error('AuthController:login:Error on get user ', err, email);
+        res.locals.messages = [{
+          status: 'danger',
+          message: res.i18n('auth.login.user.get.error', { email: email })
+        }];
+        return res.serverError({} ,'auth/login');
+      }
+
+      if(!usr){
+        sails.log.debug('AuthController:login:User not found', email);
+        res.locals.messages = [{
+          status: 'danger',
+          message: res.i18n('auth.login.user.not.found', { email: email })
+        }];
+        return res.badRequest({} ,'auth/login');
+      }
+
+      if (!usr.verifyPassword(password)) {
+        res.locals.messages = [{
+          status: 'danger',
+          message: res.i18n('auth.login.password.wrong', { email: email })
+        }];
+        return res.badRequest({} ,'auth/login');
+      }
+
+      req.logIn(usr, function(err){
+        if (err) {
+          sails.log.error('Error on login user after register', usr);
+          return res.serverError(err);
+        }
+
+        res.redirect('/');
+      });
+
+    });
+  },
+  login: function (req, res, next) {
+    var sails = req._sails;
+    var User = sails.models.user;
+
+    var email = req.param('email');
+    var password = req.param('password');
+
+    // if dont wants json respond it with static signup function
+    // TODO change this code to use sails.js 0.10.X custom respose feature
+    if (! req.wantsJSON) {
+      return sails.controllers.auth.staticPostLogin(req, res);
+    }
 
     if(!email || !password){
       sails.log.debug('AuthController:login:Password and email is required', password, email);
@@ -274,11 +477,13 @@ module.exports = {
       }
 
       passport.authenticate('local', function(err, usr, info) {
-
-        if (err){
+        if (err) {
+          sails.log.error('AuthContorller.login: Error on passport.authenticate', err);
           return res.serverError(err);
         }
-        if (!usr){ return res.redirect('/login'); }
+        if (!usr) {
+          return res.redirect('/login');
+        }
 
         req.logIn(usr, function(err){
           if(err){
@@ -638,6 +843,46 @@ module.exports = {
   }
 
 };
+
+/**
+ * Default local variables for register locals
+ *
+ * @param {object} req express.js request
+ * @param {object} res express.js response object
+ */
+function setDefaultRegisterLocals(req, res){
+
+  var user = {};
+  user.displayName = req.param('displayName');
+  user.username = req.param('username');
+  user.email = req.param('email');
+  user.password = req.param('password');
+  user.language = req.param('language');
+  user.biography = req.param('biography');
+
+  res.locals.messages = [];
+  res.locals.user = user;
+  res.locals.formAction = '/signup';
+  res.locals.service = req.param('service');
+  res.locals.consumerId = req.param('consumerId');
+  res.locals.interests = [{
+      'id': 'APS',
+      'text': 'Atenção Primária à Saúde'
+    },
+    {
+      'id': 'enfermagem',
+      'text': 'Enfermagem'
+    },
+    {
+      'id': 'amamentação',
+      'text': 'Amamentação'
+    },
+    {
+      'id': 'PNH',
+      'text': 'Humanização'
+    }
+  ];
+}
 
 /**
  * Load user and auth token

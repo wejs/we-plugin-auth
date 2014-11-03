@@ -17,7 +17,6 @@
 module.exports.routes = {
   'get /account': 'AuthController.current',
 
-
   // User Auth
   // TODO move to AuthController
 
@@ -32,6 +31,25 @@ module.exports.routes = {
     //view: 'users/signup'
   },
 
+  'post /api/v1/signup': {
+    controller: 'AuthController',
+    action: 'signup'
+    //view: 'users/signup'
+  },
+
+  // form login
+  'get /login': {
+    controller: 'AuthController',
+    action: 'loginPage'
+  },
+  // form login / post
+  'post /login': {
+    controller: 'AuthController',
+    action: 'login'
+  },
+
+
+  // api login
   'post /auth/login': {
     controller    : 'AuthController',
     action        : 'login'
