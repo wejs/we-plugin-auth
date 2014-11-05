@@ -35,6 +35,11 @@
     "jshint": "^2.5.0",
     "jscs": "^1.4.5"
   },
+  "files": [
+    "api",
+    "config",
+    "lib"
+  ],
   "repository": {
     "type": "git",
     "url": "git@github.com:wejs/we-plugin-auth.git"
