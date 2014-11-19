@@ -651,13 +651,32 @@ module.exports = {
 
   },
 
-  forgotPasswordPage: function(req, res){
+  forgotPasswordPage: function(req, res) {
+    if (req.isAuthenticated()) return res.redirect('/');
+
+    res.locals.emailSend = false;
+
+
+    res.locals.messages = [];
+    res.locals.user = req.param('user');
+    if (!res.locals.user) res.locals.user = {};
+    res.locals.formAction = '/auth/forgot-password';
+
     // return home page and let emeberJs mount the page
-    res.view('home/index.ejs');
+    res.view('auth/forgot-password');
   },
 
-  forgotPassword: function(req, res){
-   var email = req.param('email');
+  forgotPassword: function(req, res) {
+    if (req.isAuthenticated()) return res.redirect('/');
+    var sails = req._sails;
+
+    res.locals.emailSend = false;
+    res.locals.messages = [];
+    res.locals.user = req.param('user');
+    if (!res.locals.user) res.locals.user = {};
+    res.locals.formAction = '/auth/forgot-password';
+
+    var email = req.param('email');
 
     if(!email){
       return res.badRequest('Email is required to request a password reset token.');
@@ -667,68 +686,88 @@ module.exports = {
     .exec(function(error, user){
       if(error){
         sails.log.error(error);
-        return res.serverError(error);
+        return res.serverError();
       }
 
-      if(!user){
-        return res.send(404,{
+      if (!user) {
+        res.locals.messages = [{
           errors: [{
-            status: 'error',
+            status: 'danger',
             type: 'not_found',
             message: res.i18n('User not found for this email')
           }]
-        });
+        }];
+        return res.badRequest({}, 'auth/forgot-password');
       }
 
-      AuthToken.create( {'user_id': user.id} ).exec(function(error, token) {
+      AuthToken.create({
+        'userId': user.id,
+        tokenType: 'resetPassword'
+      }).exec(function(error, token) {
         if(error){
           sails.log.error(error);
           return res.serverError(error);
         }
 
-        if(token){
-          var appName;
-          if(sails.config.appName){
-            appName = sails.config.appName;
-          }else{
-            appName = 'We.js';
+        if (!token) {
+          return res.serverError('unknow error on create auth token');
+        }
+
+        var appName;
+        if (sails.config.appName) {
+          appName = sails.config.appName;
+        } else {
+          appName = 'We.js';
+        }
+
+        var options = {
+          email: user.email,
+          subject: appName + ' - ' + res.i18n('Reset password'),
+          from: sails.config.email.siteEmail
+        };
+
+        user = user.toJSON();
+
+        var templateVariables = {
+          user: {
+            name: user.username,
+            displayName: user.displayName
+          },
+          site: {
+            name: appName,
+            slogan: 'MIMI one slogan here',
+            url: sails.config.hostname
+          },
+          resetPasswordUrl: token.getResetUrl()
+        };
+
+        weSendEmail.sendEmail(options, 'AuthResetPasswordEmail', templateVariables, function(err , emailResp){
+          if (err) {
+            sails.log.error('Error on send email AuthResetPasswordEmail', err, emailResp);
           }
 
-          var options = {
-            email: user.email,
-            subject: appName + ' - ' + res.i18n('Reset password')
-          };
+          sails.log.info('AuthResetPasswordEmail: Email resp:', emailResp);
 
-          user = user.toJSON();
-
-          var templateVariables = {
-            user: {
-              name: user.name
-            },
-            site: {
-              name: appName,
-              slogan: 'MIMI one slogan here',
-              url: req.baseUrl
-            },
-            resetPasswordUrl: req.baseUrl + '/auth/'+ user.id +'/reset-password/' + token.token
-          };
-
-          weSendEmail.sendEmail(options, 'AuthResetPasswordEmail', templateVariables, function(err , emailResp){
-            if(err){
-              sails.log.error(err);
-            }
-
-            // success send {status: 200} for user
-            res.send({
+          if (req.wantsJSON) {
+            return res.send({
               success: [{
                 type: 'email_send',
                 status: 'success',
                 message: res.i18n('Forgot password email send')
               }]
             });
-          });
-        }
+          }
 
+          res.locals.emailSend = false;
+          res.locals.messages = [{
+            success: [{
+              type: 'email_send',
+              status: 'success',
+              message: res.i18n('Forgot password email send')
+            }]
+          }];
+          res.view('auth/forgot-password');
+        });
       });
     });
   },

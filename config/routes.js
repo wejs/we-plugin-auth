@@ -54,7 +54,6 @@ module.exports.routes = {
     action: 'login'
   },
 
-
   // api login
   'post /auth/login': {
     controller    : 'AuthController',

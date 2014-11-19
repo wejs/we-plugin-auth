@@ -17,13 +17,11 @@ module.exports = {
     },
 
     providerUserId: {
-      type: 'string',
-      required: true
+      type: 'string'
     },
 
     tokenProviderId: {
-      type: 'string',
-      required: true
+      type: 'string'
     },
 
     tokenType: {
@@ -38,13 +36,17 @@ module.exports = {
     isValid: {
       type: 'boolean',
       defaultsTo: true
+    },
+
+    getResetUrl: function() {
+      return sails.config.hostname + '/auth/'+ this.userId +'/reset-password/' + this.token
     }
   },
 
   beforeCreate: function(token, next) {
-    if(token.user_id){
+    if (token.userId) {
       // before invalid all user old tokens
-      AuthToken.invalidOldUserTokens(token.user_id, function(err, result){
+      AuthToken.invalidOldUserTokens(token.userId, function(err, result){
         // generete new token
         token.token = crypto.randomBytes(25).toString('hex');
         next();
