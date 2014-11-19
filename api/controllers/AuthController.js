@@ -1,8 +1,9 @@
 // api/controllers/AuthController.js
 
-var weSendEmail = require('we-send-email')
-  , _ = require('lodash')
-  , passport = require('we-passport').getPassport();
+var weSendEmail = require('we-send-email'),
+  _ = require('lodash'),
+  passport = require('we-passport').getPassport(),
+  actionUtil = require('we-helpers').actionUtil;
 
 module.exports = {
 
@@ -113,12 +114,14 @@ module.exports = {
     }
 
     var requireAccountActivation = false;
-    var user = {};
-    user.displayName = req.param('displayName');
-    user.username = req.param('username');
-    user.email = req.param('email');
-    user.password = req.param('password');
-    user.language = req.param('language');
+
+    var user = actionUtil.parseValues(req);
+
+    // user.displayName = req.param('displayName');
+    // user.username = req.param('username');
+    // user.email = req.param('email');
+    // user.password = req.param('password');
+    // user.language = req.param('language');
 
     if( !_.isUndefined(sails.config.site) ){
       if ( !sails.util.isUndefined( sails.config.site.requireAccountActivation ) ){
@@ -306,15 +309,21 @@ module.exports = {
 
         User.create(user).exec(function(error, newUser) {
           if (error) {
-            if(error.ValidationError){
-              // wrong email format
-              if(error.ValidationError.email || error.ValidationError.username){
-                res.locals.messages = [{
-                  status: 'danger',
-                  message: res.i18n('auth.register.error.emailOrUsername.ivalid', { email: user.email })
-                }];
-                return res.badRequest({}, 'auth/register');
+            if (error.ValidationError) {
+              sails.log.warn('user after create', error.ValidationError);
+
+              for (var attr in error.ValidationError) {
+                if (error.ValidationError.hasOwnProperty(attr)) {
+                  res.locals.messages = [{
+                    status: 'danger',
+                    message: res.i18n('auth.register.error.' +
+                      attr +
+                      '.ivalid', { value: user[attr] })
+                  }];
+                }
               }
+
+              return res.badRequest({}, 'auth/register');
             }else {
               return res.send(500, {
                 error: res.i18n('DB Error')
@@ -376,9 +385,8 @@ module.exports = {
     res.view('auth/login');
   },
 
-  staticPostLogin: function (req, res) {
+  staticPostLogin: function (req, res, next) {
     var sails = req._sails;
-    var User = sails.models.user;
 
     var email = req.param('email');
     var password = req.param('password');
@@ -398,18 +406,23 @@ module.exports = {
       return res.serverError({} ,'auth/login');
     }
 
-    User.findOneByEmail(email).exec(function(err, usr) {
+    passport.authenticate('local', function(err, user, info) {
       if (err) {
         sails.log.error('AuthController:login:Error on get user ', err, email);
-        res.locals.messages = [{
-          status: 'danger',
-          message: res.i18n('auth.login.user.get.error', { email: email })
-        }];
-        return res.serverError({} ,'auth/login');
+        return res.serverError();
       }
 
-      if(!usr){
-        sails.log.debug('AuthController:login:User not found', email);
+
+      if (!user) {
+        if (info.message === 'Invalid password') {
+          res.locals.messages = [{
+            status: 'danger',
+            message: res.i18n('auth.login.password.wrong', { email: email })
+          }];
+          return res.badRequest({} ,'auth/login');
+        }
+
+        sails.log.verbose('AuthController:login:User not found', email);
         res.locals.messages = [{
           status: 'danger',
           message: res.i18n('auth.login.user.not.found', { email: email })
@@ -417,94 +430,51 @@ module.exports = {
         return res.badRequest({} ,'auth/login');
       }
 
-      if (!usr.verifyPassword(password)) {
-        res.locals.messages = [{
-          status: 'danger',
-          message: res.i18n('auth.login.password.wrong', { email: email })
-        }];
-        return res.badRequest({} ,'auth/login');
-      }
-
-      req.logIn(usr, function(err){
+      req.logIn(user, function(err){
         if (err) {
-          sails.log.error('Error on login user after register', usr);
+          sails.log.error('Error on login user after register', user, err);
           return res.serverError(err);
         }
 
         res.redirect('/');
       });
-
-    });
+    })(req, res, next);
   },
   login: function (req, res, next) {
     var sails = req._sails;
-    var User = sails.models.user;
 
     var email = req.param('email');
-    var password = req.param('password');
 
     // if dont wants json respond it with static signup function
     // TODO change this code to use sails.js 0.10.X custom respose feature
     if (! req.wantsJSON) {
-      return sails.controllers.auth.staticPostLogin(req, res);
+      return sails.controllers.auth.staticPostLogin(req, res, next);
     }
 
-    if(!email || !password){
-      sails.log.debug('AuthController:login:Password and email is required', password, email);
-      return res.send(401,{
-        error: [{
-            status: '401',
-            message: res.i18n('Password and email is required')
-          }]
-      });
-    }
-
-    User.findOneByEmail(email).exec(function(err, usr) {
+    passport.authenticate('local', function(err, user, info) {
       if (err) {
         sails.log.error('AuthController:login:Error on get user ', err, email);
-        return res.send(500, { error: res.i18n('DB Error') });
+        return res.serverError();
       }
 
-      if(!usr){
+      if(!user) {
         sails.log.debug('AuthController:login:User not found', email);
         return res.send(401,{
           error: [{
-              status: '401',
-              message: res.i18n('User not found')
-            }]
-          });
-      }
-
-      if (!usr.verifyPassword(password)) {
-        sails.log.debug('AuthController:login:Wrong Password', email);
-        return res.send(401,{ error: [{
             status: '401',
-            message: res.i18n('Wrong Password')
+            message: info.message
           }]
         });
       }
 
-      passport.authenticate('local', function(err, usr, info) {
-        if (err) {
-          sails.log.error('AuthContorller.login: Error on passport.authenticate', err);
+      req.logIn(user, function(err){
+        if(err){
           return res.serverError(err);
         }
-        if (!usr) {
-          return res.redirect('/login');
-        }
 
-        req.logIn(usr, function(err){
-          if(err){
-            return res.serverError(err);
-          }
-
-          res.send(usr);
-          // TODO add suport to oauth tokens
-          //res.redirect('/');
-        });
-
-      })(req, res, next);
-    });
+        res.send(user);
+      });
+    })(req, res, next);
   },
 
   /**
@@ -734,7 +704,6 @@ module.exports = {
     });
   },
 
-
   resetPasswordPage: function(req, res){
     res.view('home/index');
   },
@@ -860,13 +829,7 @@ module.exports = {
  */
 function setDefaultRegisterLocals(req, res){
 
-  var user = {};
-  user.displayName = req.param('displayName');
-  user.username = req.param('username');
-  user.email = req.param('email');
-  user.password = req.param('password');
-  user.language = req.param('language');
-  user.biography = req.param('biography');
+  var user = actionUtil.parseValues(req);
 
   res.locals.messages = [];
   res.locals.user = user;
