@@ -17,6 +17,12 @@
 module.exports.routes = {
   'get /account': 'AuthController.current',
 
+  // update authenticated user
+  'post /account': {
+    controller: 'AuthController',
+    action: 'updateAccountData'
+  },
+
   // User Auth
   // TODO move to AuthController
 

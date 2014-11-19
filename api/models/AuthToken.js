@@ -5,6 +5,7 @@
  * @description :: Auth Token model for create login, password and activate account tokens
  *
  */
+var crypto = require('crypto');
 
 module.exports = {
   schema: true,
@@ -40,18 +41,18 @@ module.exports = {
     }
   },
 
-  // beforeCreate: function(token, next) {
-  //   if(token.user_id){
-  //     // before invalid all user old tokens
-  //     AuthToken.invalidOldUserTokens(token.user_id, function(err, result){
-  //       // generete new token
-  //       token.token = uuid.v1();
-  //       next();
-  //     });
-  //   }else{
-  //     next();
-  //   }
-  // },
+  beforeCreate: function(token, next) {
+    if(token.user_id){
+      // before invalid all user old tokens
+      AuthToken.invalidOldUserTokens(token.user_id, function(err, result){
+        // generete new token
+        token.token = crypto.randomBytes(25).toString('hex');
+        next();
+      });
+    }else{
+      next();
+    }
+  },
 
   /**
    * Invalid old user tokens

@@ -5,6 +5,8 @@ var weSendEmail = require('we-send-email'),
   passport = require('we-passport').getPassport(),
   actionUtil = require('we-helpers').actionUtil;
 
+var util = require('util');
+
 module.exports = {
 
   // getter for current logged in user
@@ -40,25 +42,92 @@ module.exports = {
       res.locals.service = req.param('service');
       res.locals.consumerId = req.param('consumerId');
 
-      res.locals.interests = [{
-        'id': 'APS',
-        'text': 'Atenção Primária à Saúde'
-      },
-      {
-        'id': 'enfermagem',
-        'text': 'Enfermagem'
-      },
-      {
-        'id': 'amamentação',
-        'text': 'Amamentação'
-      },
-      {
-        'id': 'PNH',
-        'text': 'Humanização'
-      }];
-
       res.view('user/account',{user: user});
     }
+  },
+
+    // getter for current logged in user
+  updateAccountData: function (req, res) {
+    if (!req.isAuthenticated || !req.isAuthenticated() )
+      return res.forbiden();
+
+    var sails = req._sails;
+
+    res.locals.messages = [];
+    res.locals.user = req.user;
+    res.locals.formAction = '/account';
+    res.locals.service = req.param('service');
+    res.locals.consumerId = req.param('consumerId');
+
+    User.findOneById(req.user.id).exec(function (err, usr){
+      if (err) {
+        sails.log.error('updateCurrentUser: Error on find user by id',err);
+        return res.serverError({ error: res.i18n('Error') });
+      }
+
+      // Look up the model
+      var Model = sails.models.user;
+
+      // Locate and validate the required `id` parameter.
+      var pk = actionUtil.requirePk(req);
+
+      // Create `values` object (monolithic combination of all parameters)
+      // But omit the blacklisted params (like JSONP callback param, etc.)
+      var values = actionUtil.parseValues(req);
+
+      delete values.id;
+
+      Model.update(pk, values).exec(function updated(err, records) {
+
+        // Differentiate between waterline-originated validation errors
+        // and serious underlying issues. Respond with badRequest if a
+        // validation error is encountered, w/ validation info.
+        if (err) {
+          if(err.ValidationError){
+            sails.log.warn('user after create', err.ValidationError);
+
+            for (var attr in err.ValidationError) {
+              if (err.ValidationError.hasOwnProperty(attr)) {
+                res.locals.messages = [{
+                  status: 'danger',
+                  message: res.i18n('auth.register.error.' +
+                    attr +
+                    '.ivalid',values)
+                }];
+              }
+            }
+
+            return res.badRequest({}, 'user/account');
+          }else {
+            return res.send(500, {
+              error: res.i18n('DB Error')
+            });
+          }
+
+          sails.log.error('Error on update user account', err);
+          res.locals.messages = [{
+            status: 'danger',
+            message: res.i18n('auth.login.password.and.email.required', values)
+          }];
+          return res.negotiate('user/account', err);
+        }
+
+        // Because this should only update a single record and update
+        // returns an array, just use the first item.  If more than one
+        // record was returned, something is amiss.
+        if (!records || !records.length || records.length > 1) {
+          req._sails.log.warn(
+          util.format('Unexpected output from `%s.update`.', Model.globalId)
+          );
+        }
+
+        var updatedRecord = records[0];
+
+        req.user = updatedRecord;
+
+        return sails.controllers.auth.current(req, res);
+      });// </updated>
+    })
   },
 
   /**
