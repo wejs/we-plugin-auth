@@ -448,6 +448,8 @@ module.exports = {
   },
 
   loginPage: function (req, res) {
+    if (req.isAuthenticated()) return res.redirect('/');
+
     res.locals.messages = [];
     res.locals.user = {};
 
@@ -456,6 +458,8 @@ module.exports = {
 
   staticPostLogin: function (req, res, next) {
     var sails = req._sails;
+
+    if (req.isAuthenticated()) return res.redirect('/');
 
     var email = req.param('email');
     var password = req.param('password');
@@ -509,6 +513,7 @@ module.exports = {
       });
     })(req, res, next);
   },
+
   login: function (req, res, next) {
     var sails = req._sails;
 
@@ -684,18 +689,16 @@ module.exports = {
 
     User.findOneByEmail(email)
     .exec(function(error, user){
-      if(error){
+      if (error) {
         sails.log.error(error);
-        return res.serverError();
+        return res.serverError(error);
       }
 
       if (!user) {
         res.locals.messages = [{
-          errors: [{
-            status: 'danger',
-            type: 'not_found',
-            message: res.i18n('User not found for this email')
-          }]
+          status: 'danger',
+          type: 'not_found',
+          message: res.i18n('auth.forgot-password.user.not-found')
         }];
         return res.badRequest({}, 'auth/forgot-password');
       }
@@ -753,20 +756,22 @@ module.exports = {
               success: [{
                 type: 'email_send',
                 status: 'success',
-                message: res.i18n('Forgot password email send')
+                message: res.i18n('auth.forgot-password.email.send')
               }]
             });
           }
 
-          res.locals.emailSend = false;
-          res.locals.messages = [{
-            success: [{
-              type: 'email_send',
-              status: 'success',
-              message: res.i18n('Forgot password email send')
-            }]
-          }];
-          res.view('auth/forgot-password');
+          res.locals.emailSend = true;
+          req.flash('messages',[{
+            type: 'email_send',
+            status: 'success',
+            message: res.i18n('auth.forgot-password.email.send', {
+              displayName: user.displayName,
+              email: email,
+            })
+          }]);
+
+          res.redirect('/');
         });
       });
     });
@@ -802,47 +807,75 @@ module.exports = {
         authToken.isValid = false;
         authToken.save();
 
-        if(req.wantsJSON){
-          res.send('200',user);
-        }else{
-          res.redirect( '/auth/reset-password/' + authToken.id);
+        if (req.wantsJSON) {
+          res.send('200', authToken);
+        } else {
+          res.redirect( '/auth/' + user.id + '/reset-password/' + authToken.id);
         }
-
       });
     });
   },
 
-  resetPasswordPage: function(req, res){
-    res.view('home/index');
+  changePasswordPage: function(req, res, next) {
+    if(!req.isAuthenticated()) return res.redirect('/');
+
+    var userId = req.param('id');
+
+    if (!userId) return next();
+
+    if (userId != req.user.id) return res.redirect('/auth/' + req.user.id + '/change-password');
+
+    res.locals.oldPassword = req.param('password');
+    res.locals.newPassword = req.param('newPassword');
+    res.locals.rNewPassword = req.param('rNewPassword');
+    res.locals.formAction = '/auth/' + userId + '/change-password';
+
+    res.locals.user = req.user;
+
+    res.view('auth/change-password');
   },
 
-  changePassword: function (req, res){
-    var oldPassword = req.body.oldPassword;
-    var newPassword = req.body.newPassword;
-    var rNewPassword = req.body.rNewPassword;
+  changePassword: function (req, res, next) {
+    if(!req.isAuthenticated()) return res.redirect('/');
+    var sails = req._sails;
+    var User = sails.models.user;
+
+    var oldPassword = req.param('password');
+    var newPassword = req.param('newPassword');
+    var rNewPassword = req.param('rNewPassword');
     var userId = req.param('id');
 
     // TODO move this access check to one policy
-    if(!req.user || !req.user.email || req.user.id !== userId){
-      return res.send(403, {
-        responseMessage: {
-          errors: [
-            {
-              type: 'authentication',
-              message: res.i18n('Forbiden')
-            }
-          ]
-        }
-      });
+    if(!req.isAuthenticated() || req.user.id != userId) {
+      if (req.wantsJSON) {
+        return res.send(403, {
+          responseMessage: {
+            errors: [
+              {
+                type: 'authentication',
+                message: res.i18n('Forbiden')
+              }
+            ]
+          }
+        });
+      } else {
+        res.locals.messages = [{
+          status: 'danger',
+          type: 'forbiden',
+          message: res.i18n('auth.fochange-password.forbiden')
+        }];
+        return sails.controllers.auth.changePasswordPage(req, res, next);
+      }
+
     }
 
-    var errors = {};
+    var errors = [];
 
-    if(!oldPassword){
-      errors.password = [];
-      errors.password.push({
+    if (!oldPassword) {
+      errors.push({
         type: 'validation',
         field: 'oldPassword',
+        status: 'danger',
         rule: 'required',
         message: res.i18n("Field <strong>password</strong> is required")
       });
@@ -851,34 +884,39 @@ module.exports = {
     //sails.log.info('newPassword:' , newPassword , '| rNewPassword:' , rNewPassword);
 
     if( _.isEmpty(newPassword) || _.isEmpty(rNewPassword) ){
-      errors.password = [];
-      errors.password.push({
+      errors.push({
         type: 'validation',
         field: 'rNewPassword',
         rule: 'required',
-        message: res.i18n("Field <strong>Confirm new password</strong> and <strong>New Password</strong> is required")
+        status: 'danger',
+        message: res.i18n('Field <strong>Confirm new password</strong> and <strong>New Password</strong> is required')
       });
     }
 
     if(newPassword !== rNewPassword){
-      errors.password = [];
-      errors.password.push({
+      errors.push({
         type: 'validation',
         field: 'newPassword',
         rule: 'required',
+        status: 'danger',
         message: res.i18n('<strong>New password</strong> and <strong>Confirm new password</strong> are different')
       });
     }
 
-    if( ! _.isEmpty(errors) ){
-      // error on data or confirm password
-      return res.send('400',{
-        'error': 'E_VALIDATION',
-        'status': 400,
-        'summary': 'Validation errors',
-        'model': 'User',
-        'invalidAttributes': errors
-      });
+    if( ! _.isEmpty(errors) ) {
+      if (req.wantsJSON) {
+        // erro,r on data or confirm password
+        return res.send('400',{
+          messages: errors
+        });
+      } else {
+        res.locals.messages = [];
+        for (var i = 0; i < errors.password.length; i++) {
+          errors.password[i].status = 'danger';
+          res.locals.messages.push(errors.password[i]);
+        }
+        return sails.controllers.auth.changePasswordPage(req, res, next);
+      }
     }
 
     User.findOneById(userId)
@@ -893,40 +931,45 @@ module.exports = {
         return res.negotiate(error);
       }
 
-      var passwordOk = user.verifyPassword(oldPassword);
+      user.verifyPassword(oldPassword, function(err, passwordOk) {
+        if (!passwordOk) {
+          var errors = [{
+            type: 'validation',
+            field: 'password',
+            rule: 'wrong',
+            status: 'danger',
+            message: res.i18n('The <strong>current password</strong> is invalid.')
+          }];
+          if (req.wantsJSON) {
+            // erro,r on data or confirm password
+            return res.send('400',{
+              messages: errors
+            });
+          } else {
+            res.locals.messages = errors;
+            return sails.controllers.auth.changePasswordPage(req, res, next);
+          }
+        }
 
-      if(passwordOk){
-
+        // set newPassword and save it for generate the password hash on update
         user.newPassword = newPassword;
-        user.save();
+        user.save(function(err) {
+          if(err) sails.log.error('Error on save user to update password',err);
 
-        return res.send('200',{
-          success: [
-            {
-              status: '200',
-              message: res.i18n('Password changed successfully.')
-            }
-          ]
+          res.locals.messages = [{
+            status: 'success',
+            type: 'updated',
+            message: res.i18n('Password changed successfully.')
+          }];
+
+          if (req.wantsJSON) {
+            return res.send('200',{messages: res.locals.messages});
+          }
+          return sails.controllers.auth.changePasswordPage(req, res, next);
         });
-      } else {
-        errors.password = [];
-        errors.password.push({
-          type: 'validation',
-          field: 'password',
-          rule: 'required',
-          message: res.i18n('The <strong>current password</strong> is invalid.')
-        });
-        return res.send('400',{
-          'error': 'E_VALIDATION',
-          'status': 400,
-          'summary': 'Validation errors',
-          'model': 'User',
-          'invalidAttributes': errors
-        });
-      }
+      });
     });
   }
-
 };
 
 /**
@@ -970,40 +1013,35 @@ function setDefaultRegisterLocals(req, res){
  * @param  {Function} callback    callback(error, user, authToken)
  */
 var loadUserAndAuthToken = function(uid, token, callback){
-  User.findOneById(uid)
-  .exec(function(error, user){
-    if(error){
+  User.findOneById(uid).exec(function (error, user) {
+    if (error) {
       sails.log.error('consumeForgotPasswordToken: Error on get user', user, token);
       return callback(error, null, null);
     }
 
-    if(user){
-      AuthToken
-      .findOneByToken(token)
-      .where({
-        'user_id': user.id,
-        token: token,
-        isValid: true
-      })
-      .exec(function(error, authToken){
-        if(error){
-          sails.log.error('consumeForgotPasswordToken: Error on get token', user, token);
-          return callback(error, null, null);
-        }
-
-        if(authToken){
-          return callback(null, user, authToken);
-        }else{
-          return callback(null, user, null);
-        }
-
-      });
-
-    }else{
+    if (!user) {
       // user not found
       return callback(null, null, null);
     }
 
+    AuthToken.findOneByToken(token)
+    .where({
+      userId: user.id,
+      token: token,
+      isValid: true
+    })
+    .exec(function(error, authToken){
+      if (error) {
+        sails.log.error('consumeForgotPasswordToken: Error on get token', user, token);
+        return callback(error, null, null);
+      }
+
+      if (authToken) {
+        return callback(null, user, authToken);
+      }else{
+        return callback(null, user, null);
+      }
+    });
   });
 };
 

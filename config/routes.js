@@ -82,19 +82,13 @@ module.exports.routes = {
     action: 'consumeForgotPasswordToken'
   },
 
-  'get /auth/reset-password':{
-    controller    : 'AuthController',
-    action        : 'resetPasswordPage'
-  },
-
-  'put /auth/:id/change-password':{
+  // change password
+  'post /auth/:id/change-password':{
     controller    : 'AuthController',
     action        : 'changePassword'
+  },
+  'get /auth/:id/change-password':{
+    controller    : 'AuthController',
+    action        : 'changePasswordPage'
   }
-
-  // register  form
-  // 'get /auth/register': {
-  //   controller    : 'auth',
-  //   action        : 'registerForm'
-  // },
 }
