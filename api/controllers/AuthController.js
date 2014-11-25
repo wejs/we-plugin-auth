@@ -1,9 +1,10 @@
 // api/controllers/AuthController.js
 
-var weSendEmail = require('we-send-email'),
-  _ = require('lodash'),
+var _ = require('lodash'),
   passport = require('we-passport').getPassport(),
-  actionUtil = require('we-helpers').actionUtil;
+  actionUtil = require('we-helpers').actionUtil,
+  sendAccontActivationEmail = require('../../lib/email/accontActivationEmail.js');
+
 
 var util = require('util');
 
@@ -186,12 +187,6 @@ module.exports = {
 
     var user = actionUtil.parseValues(req);
 
-    // user.displayName = req.param('displayName');
-    // user.username = req.param('username');
-    // user.email = req.param('email');
-    // user.password = req.param('password');
-    // user.language = req.param('language');
-
     if( !_.isUndefined(sails.config.site) ){
       if ( !sails.util.isUndefined( sails.config.site.requireAccountActivation ) ){
         requireAccountActivation = sails.config.site.requireAccountActivation;
@@ -276,10 +271,10 @@ module.exports = {
         }
 
         if (requireAccountActivation) {
-          return EmailService.sendAccontActivationEmail(newUser, req.baseUrl , function(err){
+          return sendAccontActivationEmail(newUser, req.baseUrl, sails, function(err){
             if(err) {
               sails.log.error('Action:Login sendAccontActivationEmail:',err);
-              return res.serverError('Error on send activation email for new user',newUser);
+              return res.serverError('Error on send activation email for new user', newUser);
             }
 
             res.send('201',{
@@ -402,7 +397,7 @@ module.exports = {
           req.user = newUser;
 
           if (requireAccountActivation) {
-            return EmailService.sendAccontActivationEmail(newUser, req.baseUrl , function(err){
+            return sendAccontActivationEmail(newUser, req.baseUrl, sails, function(err) {
               if(err) {
                 sails.log.error('Action:Login sendAccontActivationEmail:', err);
                 res.locals.messages = [{
@@ -415,7 +410,8 @@ module.exports = {
                 return res.send('201',{
                   success: [{
                     status: 'warning',
-                    message: res.i18n('Account created but is need an email validation\n, One email was send to %s with instructions to validate your account', newUser.email)
+                    message: res.i18n('Account created but is need an email validation\n,'+
+                      ' One email was send to %s with instructions to validate your account', newUser.email)
                   }]
                 });
               }
@@ -744,7 +740,7 @@ module.exports = {
           resetPasswordUrl: token.getResetUrl()
         };
 
-        weSendEmail.sendEmail(options, 'AuthResetPasswordEmail', templateVariables, function(err , emailResp){
+        sails.email.sendEmail(options, 'AuthResetPasswordEmail', templateVariables, function(err , emailResp){
           if (err) {
             sails.log.error('Error on send email AuthResetPasswordEmail', err, emailResp);
           }

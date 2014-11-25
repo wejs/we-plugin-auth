@@ -12,7 +12,6 @@
     "we-helpers": "^0.0.6",
     "we-oauth2": "0.0.11",
     "we-passport": "^0.1.2",
-    "we-send-email": "0.0.5",
     "we-theme-engine": "0.0.10"
   },
   "main": "lib/index.js",
