@@ -1094,6 +1094,7 @@ function checkIfIsSpamInRegister(req, res, done) {
   var isSpam = false;
   async.parallel([
     function checkIpOnHoneypot(cb){
+      if (!req._sails.honeypot) return cb(); // honeypot is disabled
       req._sails.honeypot.checkRequest(req, function(err, isspam) {
         if(err) return cb(err);
         if (isspam) isSpam = true;
