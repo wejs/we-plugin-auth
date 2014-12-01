@@ -1092,7 +1092,7 @@ var validSignup = function(user, confirmPassword, res){
 
 function checkIfIsSpamInRegister(req, res, done) {
   var isSpam = false;
-  async.paralel([
+  async.parallel([
     function checkIpOnHoneypot(cb){
       req._sails.honeypot.checkRequest(req, function(err, isspam) {
         if(err) return cb(err);
