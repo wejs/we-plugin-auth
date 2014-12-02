@@ -5,7 +5,8 @@ var _ = require('lodash'),
   actionUtil = require('we-helpers').actionUtil,
   sendAccontActivationEmail = require('../../lib/email/accontActivationEmail.js'),
   async = require('async'),
-  util = require('util');
+  util = require('util'),
+  wejsErrs = require('we-lib-error-parser');
 
 module.exports = {
 
@@ -211,11 +212,7 @@ module.exports = {
       if ( ! _.isEmpty(errors) ) {
         // error on data or confirm password
         return res.send('400',{
-          'error': 'E_VALIDATION',
-          'status': 400,
-          'summary': 'Validation errors',
-          'model': 'User',
-          'invalidAttributes': errors
+          messages: errors
         });
       }
 
@@ -227,17 +224,11 @@ module.exports = {
 
         if ( usr ) {
           return res.send(400,{
-            'error': 'E_VALIDATION',
-            'status': 400,
-            'summary': 'The email address is already registered in the system',
-            'model': 'User',
-            'invalidAttributes': {
-              'email': [
-                {
-                  'rule': 'email',
-                  'message': 'The email address is already registered in the system'
-                }
-              ]
+            messages: {
+              status: 'danger',
+              field: 'email',
+              rule: 'email',
+              message: 'The email address is already registered in the system'
             }
           });
         }
@@ -245,29 +236,8 @@ module.exports = {
         User.create(user).exec(function (error, newUser) {
           if (error) {
             if(error.ValidationError) {
-              if(
-                error.ValidationError &&
-                error.invalidAttributes
-              ) {
-                if(
-                  error.invalidAttributes.username ||
-                  error.invalidAttributes.email
-                ) {
-                  return res.send('400',{
-                    'error': 'E_VALIDATION',
-                    'status': 400,
-                    'summary': 'Validation errors',
-                    'model': 'User',
-                    'invalidAttributes': {
-                      username: [{
-                        message: res.i18n('auth.register.error.emailOrUsername.ivalid')
-                      }]
-                    }
-                  });
-                }
-              }
-
-              return res.send(400, error);
+              var messages = wejsErrs.convertWaterlineError(error, res);
+              return res.send(400, { messages: messages});
             }
 
             sails.log.error('signup:User.create:Error on create user', error);
@@ -282,7 +252,7 @@ module.exports = {
               }
 
               res.send('201',{
-                success: [
+                messages: [
                   {
                     status: 'warning',
                     message: res.i18n('Account created but is need an email validation\n, One email was send to %s with instructions to validate your account', newUser.email)
@@ -1045,13 +1015,13 @@ var loadUserAndAuthToken = function(uid, token, callback){
   });
 };
 
-var validSignup = function(user, confirmPassword, res){
-  var errors = {};
+function validSignup(user, confirmPassword, res){
+  var errors = [];
 
   if(!user.email){
-    errors.email = [];
-    errors.email.push({
+    errors.push({
       type: 'validation',
+      status: 'danger',
       field: 'email',
       rule: 'required',
       message: res.i18n('Field <strong>email</strong> is required')
@@ -1060,9 +1030,9 @@ var validSignup = function(user, confirmPassword, res){
 
   // check if password exist
   if(!user.password){
-    errors.password = [];
-    errors.password.push({
+    errors.push({
       type: 'validation',
+      status: 'danger',
       field: 'password',
       rule: 'required',
       message: res.i18n('Field <strong>password</strong> is required')
@@ -1070,9 +1040,9 @@ var validSignup = function(user, confirmPassword, res){
   }
 
   if(!confirmPassword){
-    errors.confirmPassword = [];
-    errors.confirmPassword.push({
+    errors.push({
       type: 'validation',
+      status: 'danger',
       field: 'confirmPassword',
       rule: 'required',
       message: res.i18n('Field <strong>Confirm new password</strong> is required')
@@ -1080,10 +1050,9 @@ var validSignup = function(user, confirmPassword, res){
   }
 
   if(confirmPassword !== user.password){
-    if(!errors.password){ errors.password = []; }
-
-    errors.password.push({
+    errors.push({
       type: 'validation',
+      status: 'danger',
       field: 'password',
       rule: 'required',
       message: res.i18n('<strong>New password</strong> and <strong>Confirm new password</strong> are different')
