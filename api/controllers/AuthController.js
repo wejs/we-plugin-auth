@@ -177,11 +177,14 @@ module.exports = {
     var User = sails.models.user;
 
     checkIfIsSpamInRegister(req, res, function(err, isSpam){
-      if(err) return res.serverError(err);
+      if(err) {
+        sails.log.error('signup:Error on checkIfIsSpamInRegister',err);
+        return res.serverError(err);
+      }
 
       // if dont wants json respond it with static signup function
       // TODO change this code to use sails.js 0.10.X custom respose feature
-      if (! req.wantsJSON) {
+      if (!req.wantsJSON) {
         return sails.controllers.auth.staticPostSignup(req, res);
       }
 
@@ -1108,7 +1111,7 @@ function checkIfIsSpamInRegister(req, res, done) {
     }
 
     if (isSpam) {
-      if (req.whantsJSON) {
+      if (req.wantsJSON) {
         return res.send('400',{
           messages: [{
             status: 'danger',
