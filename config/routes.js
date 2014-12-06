@@ -90,5 +90,10 @@ module.exports.routes = {
   'get /auth/:id/change-password':{
     controller    : 'AuthController',
     action        : 'changePasswordPage'
+  },
+
+  'get /api/v1/auth/callback/:access_token?':{
+    controller    : 'AuthController',
+    action        : 'oauth2Callback'
   }
 }

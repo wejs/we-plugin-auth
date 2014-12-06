@@ -6,6 +6,7 @@ var _ = require('lodash'),
   sendAccontActivationEmail = require('../../lib/email/accontActivationEmail.js'),
   async = require('async'),
   util = require('util'),
+  weOauth2 = require('we-oauth2'),
   wejsErrs = require('we-lib-error-parser');
 
 module.exports = {
@@ -147,7 +148,7 @@ module.exports = {
 
       // logIn user
       //weOauth2.logIn(req.accessToken, req, res);
-
+sails.log.warn('>>>' , req.user);
       req.login(req.user, function (err) {
         if (err) {
           return sails.log.error('oauth2Callback:Error on login', err);
