@@ -1,7 +1,7 @@
 {
   "name": "we-plugin-auth",
   "description": "We.js default authentication plugin",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "dependencies": {
     "async": "^0.9.0",
     "ejs": "^1.0.0",
@@ -13,7 +13,7 @@
     "validator": "^3.19.1",
     "we-helpers": "^0.0.6",
     "we-lib-error-parser": "0.0.1",
-    "we-oauth2": "0.0.14",
+    "we-oauth2": "0.0.15",
     "we-passport": "^0.1.2",
     "we-theme-engine": "0.0.10"
   },
