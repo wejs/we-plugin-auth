@@ -146,9 +146,6 @@ module.exports = {
         return res.redirect('/');
       }
 
-      // logIn user
-      //weOauth2.logIn(req.accessToken, req, res);
-sails.log.warn('>>>' , req.user);
       req.login(req.user, function (err) {
         if (err) {
           return sails.log.error('oauth2Callback:Error on login', err);
@@ -190,15 +187,9 @@ sails.log.warn('>>>' , req.user);
         return sails.controllers.auth.staticPostSignup(req, res);
       }
 
-      var requireAccountActivation = false;
+      var requireAccountActivation = sails.config.site.requireAccountActivation;
 
       var user = actionUtil.parseValues(req);
-
-      if( !_.isUndefined(sails.config.site) ){
-        if ( !sails.util.isUndefined( sails.config.site.requireAccountActivation ) ){
-          requireAccountActivation = sails.config.site.requireAccountActivation;
-        }
-      }
 
       // if dont need a account activation email then create a active user
       if (!requireAccountActivation) {
@@ -291,7 +282,7 @@ sails.log.warn('>>>' , req.user);
 
     var user = res.locals.user;
 
-    var requireAccountActivation = sails.config.requireAccountActivation;
+    var requireAccountActivation = sails.config.site.requireAccountActivation;
     // if dont need a account activation email then create a active user
     if( requireAccountActivation ){
       user.active = false;
@@ -456,7 +447,6 @@ sails.log.warn('>>>' , req.user);
         return res.serverError();
       }
 
-
       if (!user) {
         if (info.message === 'Invalid password') {
           res.locals.messages = [{
@@ -470,6 +460,14 @@ sails.log.warn('>>>' , req.user);
         res.locals.messages = [{
           status: 'danger',
           message: res.i18n('auth.login.user.not.found', { email: email })
+        }];
+        return res.badRequest({} ,'auth/login');
+      }
+
+      if(!user.active) {
+        res.locals.messages = [{
+          status: 'warning',
+          message: res.i18n('auth.login.user.not.active', { email: email })
         }];
         return res.badRequest({} ,'auth/login');
       }
@@ -505,9 +503,19 @@ sails.log.warn('>>>' , req.user);
       if(!user) {
         sails.log.debug('AuthController:login:User not found', email);
         return res.send(401,{
-          error: [{
-            status: '401',
+          messages: [{
+            status: 'warning',
             message: info.message
+          }]
+        });
+      }
+
+      if(!user.active) {
+        sails.log.debug('AuthController:login:User not found', email);
+        return res.send(401,{
+          messages: [{
+            status: 'warning',
+            message: 'auth.login.user.not.active'
           }]
         });
       }
@@ -526,13 +534,9 @@ sails.log.warn('>>>' , req.user);
    * Activate a user account with activation code
    */
   activate: function(req, res){
-    console.log('Check token');
-    console.log('activate Account');
     var user = {};
-
     user.id = req.param('id');
-
-    token = req.param('token');
+    var token = req.param('token');
 
     console.log('user.id:', user.id);
     console.log('AuthToken:',token);
@@ -751,6 +755,7 @@ sails.log.warn('>>>' , req.user);
   consumeForgotPasswordToken: function(req, res){
     var uid = req.param('uid');
     var token = req.param('token');
+    var sails = req._sails;
 
     if(!uid || !token){
       sails.log.info('consumeForgotPasswordToken: Uid of token not found', uid, token);
@@ -766,24 +771,31 @@ sails.log.warn('>>>' , req.user);
         sails.log.warn('consumeForgotPasswordToken: TODO add a invalid token page and response');
         return res.redirect('/auth/forgot-password');
       }
-
-      // login the user
-      req.logIn(user, function(err){
+      user.active = true;
+      user.save(function(err){
         if(err){
-          sails.log.error('consumeForgotPasswordToken:logIn error', err);
+          sails.log.error('Error on change user active status', err, user);
           return res.negotiate(err);
         }
+        // login the user
+        req.logIn(user, function(err){
+          if(err){
+            sails.log.error('consumeForgotPasswordToken:logIn error', err);
+            return res.negotiate(err);
+          }
 
-        // consumes the token
-        authToken.isValid = false;
-        authToken.save();
+          // consumes the token
+          authToken.isValid = false;
+          authToken.save();
 
-        if (req.wantsJSON) {
-          res.send('200', authToken);
-        } else {
-          res.redirect( '/auth/' + user.id + '/reset-password/' + authToken.id);
-        }
-      });
+          if (req.wantsJSON) {
+            res.send('200', authToken);
+          } else {
+            res.redirect( '/auth/' + user.id + '/reset-password/' + authToken.id);
+          }
+        });
+      })
+
     });
   },
 

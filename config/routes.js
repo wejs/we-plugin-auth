@@ -95,5 +95,10 @@ module.exports.routes = {
   'get /api/v1/auth/callback/:access_token?':{
     controller    : 'AuthController',
     action        : 'oauth2Callback'
+  },
+
+  'get /user/:id/activate/:token':{
+    controller    : 'AuthController',
+    action        : 'activate'
   }
 }
