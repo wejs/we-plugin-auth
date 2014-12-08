@@ -93,11 +93,11 @@ module.exports.routes = {
   },  
 
   // change password
-  'post /auth/:id/change-password':{
+  'post /change-password':{
     controller    : 'AuthController',
     action        : 'changePassword'
   },
-  'get /auth/:id/change-password':{
+  'get /change-password':{
     controller    : 'AuthController',
     action        : 'changePasswordPage'
   },

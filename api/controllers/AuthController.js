@@ -926,16 +926,16 @@ module.exports = {
   changePasswordPage: function(req, res, next) {
     if(!req.isAuthenticated()) return res.redirect('/');
 
-    var userId = req.param('id');
+    // var userId = req.param('id');
 
-    if (!userId) return next();
+    // if (!userId) return next();
 
-    if (userId != req.user.id) return res.redirect('/auth/' + req.user.id + '/change-password');
+    // if (userId != req.user.id) return res.redirect('/auth/' + req.user.id + '/change-password');
 
     res.locals.oldPassword = req.param('password');
     res.locals.newPassword = req.param('newPassword');
     res.locals.rNewPassword = req.param('rNewPassword');
-    res.locals.formAction = '/auth/' + userId + '/change-password';
+    res.locals.formAction = '/change-password';
 
     res.locals.user = req.user;
 
@@ -950,10 +950,12 @@ module.exports = {
     var oldPassword = req.param('password');
     var newPassword = req.param('newPassword');
     var rNewPassword = req.param('rNewPassword');
-    var userId = req.param('id');
+    // var userId = req.param('id');
+    var userId = req.user.id;
 
     // TODO move this access check to one policy
-    if(!req.isAuthenticated() || req.user.id != userId) {
+    // if(!req.isAuthenticated() || req.user.id != userId) {
+    if(!req.isAuthenticated()) {
       if (req.wantsJSON) {
         return res.send(403, {
           responseMessage: {
@@ -1018,9 +1020,9 @@ module.exports = {
         });
       } else {
         res.locals.messages = [];
-        for (var i = 0; i < errors.password.length; i++) {
-          errors.password[i].status = 'danger';
-          res.locals.messages.push(errors.password[i]);
+        for (var i = 0; i < errors.length; i++) {
+          errors[i].status = 'danger';
+          res.locals.messages.push(errors[i]);
         }
         return sails.controllers.auth.changePasswordPage(req, res, next);
       }
