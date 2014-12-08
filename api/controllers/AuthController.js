@@ -793,11 +793,133 @@ module.exports = {
           if (req.wantsJSON) {
             res.send('200', authToken);
           } else {
-            res.redirect( '/auth/' + user.id + '/reset-password/' + authToken.id);
+            // res.redirect( '/auth/' + user.id + '/reset-password/' + authToken.id);
+            res.redirect( '/auth/' + user.id + '/new-password/');
           }
         });
       })
 
+    });
+  },
+
+  newPasswordPage: function(req, res, next) {
+    if(!req.isAuthenticated()) return res.redirect('/');
+
+    var userId = req.param('id');
+
+    if (!userId) return next();
+
+    if (userId != req.user.id) return res.redirect('/auth/forgot-password');
+
+    // res.locals.oldPassword = req.param('password');
+    // res.locals.newPassword = req.param('newPassword');
+    // res.locals.rNewPassword = req.param('rNewPassword');
+    res.locals.formAction = '/auth/' + req.user.id + '/new-password';
+    res.locals.user = req.user;
+    res.view('auth/new-password');
+  },
+
+  newPassword: function (req, res, next) {
+    if(!req.isAuthenticated()) return res.redirect('/');
+    var sails = req._sails;
+    var User = sails.models.user;
+
+    var newPassword = req.param('newPassword');
+    var rNewPassword = req.param('rNewPassword');
+    var userId = req.param('id');
+
+    // TODO move this access check to one policy
+    if(!req.isAuthenticated() || req.user.id != userId) {
+      if (req.wantsJSON) {
+        return res.send(403, {
+          responseMessage: {
+            errors: [
+              {
+                type: 'authentication',
+                message: res.i18n('Forbiden')
+              }
+            ]
+          }
+        });
+      } else {
+        res.locals.messages = [{
+          status: 'danger',
+          type: 'forbiden',
+          message: res.i18n('auth.fochange-password.forbiden')
+        }];
+        return sails.controllers.auth.newPasswordPage(req, res, next);
+      }
+
+    }
+
+    var errors = [];
+
+    //sails.log.info('newPassword:' , newPassword , '| rNewPassword:' , rNewPassword);
+
+    if( _.isEmpty(newPassword) || _.isEmpty(rNewPassword) ){
+      errors.push({
+        type: 'validation',
+        field: 'rNewPassword',
+        rule: 'required',
+        status: 'danger',
+        message: res.i18n('Field <strong>Confirm new password</strong> and <strong>New Password</strong> is required')
+      });
+    }
+
+    if(newPassword !== rNewPassword){
+      errors.push({
+        type: 'validation',
+        field: 'newPassword',
+        rule: 'required',
+        status: 'danger',
+        message: res.i18n('<strong>New password</strong> and <strong>Confirm new password</strong> are different')
+      });
+    }
+
+    if( ! _.isEmpty(errors) ) {
+      if (req.wantsJSON) {
+        // erro,r on data or confirm password
+        return res.send('400',{
+          messages: errors
+        });
+      } else {
+        res.locals.messages = [];
+        for (var i = 0; i < errors.password.length; i++) {
+          errors.password[i].status = 'danger';
+          res.locals.messages.push(errors.password[i]);
+        }
+        return sails.controllers.auth.newPasswordPage(req, res, next);
+      }
+    }
+
+    User.findOneById(userId)
+    .exec(function(error, user){
+      if(error){
+        sails.log.error('newPassword: Error on get user', user);
+        return res.negotiate(error);
+      }
+
+      if(!user){
+        sails.log.info('newPassword: User not found', user);
+        return res.negotiate(error);
+      }
+
+      // set newPassword and save it for generate the password hash on update
+      user.newPassword = newPassword;
+      user.save(function(err) {
+        if(err) sails.log.error('Error on save user to update password',err);
+
+        req.flash('messages',[{
+          status: 'success',
+          type: 'updated',
+          message: res.i18n('New password set successfully')
+        }]);
+
+        if (req.wantsJSON) {
+          return res.send('200',{messages: res.locals.messages});
+        }
+        return res.redirect('/account');
+      });
     });
   },
 

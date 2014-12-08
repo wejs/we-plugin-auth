@@ -82,6 +82,16 @@ module.exports.routes = {
     action: 'consumeForgotPasswordToken'
   },
 
+  // new password
+  'post /auth/:id/new-password':{
+    controller    : 'AuthController',
+    action        : 'newPassword'
+  },
+  'get /auth/:id/new-password':{
+    controller    : 'AuthController',
+    action        : 'newPasswordPage'
+  },  
+
   // change password
   'post /auth/:id/change-password':{
     controller    : 'AuthController',
