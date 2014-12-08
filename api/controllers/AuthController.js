@@ -236,6 +236,8 @@ module.exports = {
             return res.serverError();
           }
 
+          sails.log.info('Auth plugin:New user:', user.email , 'username:' , user.username , 'ID:' , newUser.id);
+
           if (requireAccountActivation) {
             return sendAccontActivationEmail(newUser, req.baseUrl, sails, function(err){
               if(err) {
@@ -1093,6 +1095,8 @@ function checkIfIsSpamInRegister(req, res, done) {
     }
 
     if (isSpam) {
+      sails.log.info('Auth:markedAs:isSpam:', req.ip, req.param('username'), req.param('email'));
+
       if (req.wantsJSON) {
         return res.send('400',{
           messages: [{
@@ -1113,41 +1117,3 @@ function checkIfIsSpamInRegister(req, res, done) {
     done();
   });
 }
-/*
-var validPassword = function(password, confirmPassword, res){
-  var errors = {};
-
-  // check if password exist
-  if(!user.password){
-    errors.password = [];
-    errors.password.push({
-      type: 'validation',
-      field: 'password',
-      rule: 'required',
-      message: res.i18n("Field <strong>password</strong> is required")
-    });
-  }
-
-  if(!confirmPassword){
-    errors.confirmPassword = [];
-    errors.confirmPassword.push({
-      type: 'validation',
-      field: 'confirmPassword',
-      rule: 'required',
-      message: res.i18n("Field <strong>Confirm new password</strong> is required")
-    });
-  }
-
-  if(confirmPassword != user.password){
-    if(!errors.password) errors.password = [];
-    errors.password.push({
-      type: 'validation',
-      field: 'password',
-      rule: 'required',
-      message: res.i18n("<strong>New password</strong> and <strong>Confirm new password</strong> are different")
-    });
-  }
-
-  return errors;
-};
-*/
