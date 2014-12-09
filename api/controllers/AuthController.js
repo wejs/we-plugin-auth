@@ -813,6 +813,9 @@ module.exports = {
           authToken.isValid = false;
           authToken.save();
 
+          // set session variable req.session.resetPassword to indicate that there is a new password to be defined
+          req.session.resetPassword = true;
+
           if (req.wantsJSON) {
             res.send('200', authToken);
           } else {
@@ -937,6 +940,9 @@ module.exports = {
           type: 'updated',
           message: res.i18n('New password set successfully')
         }]);
+
+        // Reset req.session.resetPassword to indicate that the operation has been completed
+        delete req.session.resetPassword;
 
         if (req.wantsJSON) {
           return res.send('200',{messages: res.locals.messages});
