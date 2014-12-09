@@ -76,6 +76,9 @@ module.exports = {
       // Create `values` object (monolithic combination of all parameters)
       // But omit the blacklisted params (like JSONP callback param, etc.)
       var values = actionUtil.parseValues(req);
+      // dont allow flag role change here
+      values.isAdmin = usr.isAdmin;
+      values.isModerator = usr.isModerator;
 
       delete values.id;
 
