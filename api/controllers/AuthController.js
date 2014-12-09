@@ -130,6 +130,11 @@ module.exports = {
 
         req.user = updatedRecord;
 
+        req.flash('messages',[{
+          status: 'success',
+          message: res.i18n('updateAccountData.success')
+        }]);        
+
         return sails.controllers.auth.current(req, res);
       });// </updated>
     })
