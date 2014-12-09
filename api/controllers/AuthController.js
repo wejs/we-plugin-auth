@@ -200,6 +200,9 @@ module.exports = {
       var requireAccountActivation = sails.config.site.requireAccountActivation;
 
       var user = actionUtil.parseValues(req);
+      // dont allow flag role change here
+      user.isAdmin = false;
+      user.isModerator = false;
 
       // if dont need a account activation email then create a active user
       if (!requireAccountActivation) {
@@ -293,6 +296,10 @@ module.exports = {
     setDefaultRegisterLocals(req, res);
 
     var user = res.locals.user;
+    // dont allow flag role change here
+    user.isAdmin = false;
+    user.isModerator = false;
+
 
     var requireAccountActivation = sails.config.site.requireAccountActivation;
     // if dont need a account activation email then create a active user
@@ -1112,23 +1119,7 @@ function setDefaultRegisterLocals(req, res){
   res.locals.formAction = '/signup';
   res.locals.service = req.param('service');
   res.locals.consumerId = req.param('consumerId');
-  res.locals.interests = [{
-      'id': 'APS',
-      'text': 'Atenção Primária à Saúde'
-    },
-    {
-      'id': 'enfermagem',
-      'text': 'Enfermagem'
-    },
-    {
-      'id': 'amamentação',
-      'text': 'Amamentação'
-    },
-    {
-      'id': 'PNH',
-      'text': 'Humanização'
-    }
-  ];
+  res.locals.interests = [];
 }
 
 /**
