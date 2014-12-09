@@ -175,6 +175,13 @@ module.exports = {
     var sails = req._sails;
     var User = sails.models.user;
 
+    // anti spam field
+    if (req.param('mel')) {
+      sails.log.info('Bot get mel:', req.ip, req.param('email'));
+      return;
+    }
+
+
     checkIfIsSpamInRegister(req, res, function(err, isSpam){
       if(err) {
         sails.log.error('signup:Error on checkIfIsSpamInRegister',err);
@@ -422,6 +429,12 @@ module.exports = {
 
   staticPostLogin: function (req, res, next) {
     var sails = req._sails;
+
+    // anti spam field
+    if (req.param('mel')) {
+      sails.log.info('Bot get mel:', req.ip, req.param('email'));
+      return;
+    }
 
     if (req.isAuthenticated()) return res.redirect('/');
 
