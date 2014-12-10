@@ -133,7 +133,7 @@ module.exports = {
         req.flash('messages',[{
           status: 'success',
           message: res.i18n('updateAccountData.success')
-        }]);        
+        }]);
 
         return sails.controllers.auth.current(req, res);
       });// </updated>
@@ -173,9 +173,11 @@ module.exports = {
   // Signup method GET function
   signupPage: function (req, res) {
     // log out user if it access register page
-    req.logout();
-    setDefaultRegisterLocals(req, res);
-    res.view('auth/register');
+    weOauth2.logOut(req, res, function(err) {
+      if(err) sails.log.error(err);
+      setDefaultRegisterLocals(req, res);
+      res.view('auth/register');
+    });
   },
 
   // Signup method POST function
@@ -275,16 +277,14 @@ module.exports = {
             });
           }
 
-          req.logIn(newUser, function (err) {
+          weOauth2.logIn(req, res, newUser, function (err) {
             if (err) {
               sails.log.error('logIn error: ', err);
               return res.negotiate(err);
             }
-
             res.send('201',newUser);
           });
         });
-
       });
     })
   },
@@ -410,7 +410,7 @@ module.exports = {
               return res.view('auth/requires-email-validation');
             });
           } else {
-            req.logIn(newUser, function(err){
+            weOauth2.logIn(req, res, newUser, function(err){
               if (err) {
                 sails.log.error('Error on login user after register', usr);
                 return res.serverError(err);
@@ -429,8 +429,13 @@ module.exports = {
    * Beware! this dont run socket.io disconect
    */
   logout: function (req, res) {
-    req.logout();
-    res.redirect('/');
+    weOauth2.logOut(req, res, function(err){
+      if (err)
+        sails.log.error('Error on logout user', req.id, req.cookie);
+
+      req.logout();
+      res.redirect('/');
+    })
   },
 
   loginPage: function (req, res) {
@@ -502,12 +507,11 @@ module.exports = {
         return res.badRequest({} ,'auth/login');
       }
 
-      req.logIn(user, function(err){
+      weOauth2.logIn(req, res, user, function(err){
         if (err) {
           sails.log.error('Error on login user after register', user, err);
           return res.serverError(err);
         }
-
         res.redirect('/');
       });
     })(req, res, next);
@@ -550,13 +554,11 @@ module.exports = {
         });
       }
 
-      req.logIn(user, function(err){
-        if(err){
-          return res.serverError(err);
-        }
-
+      weOauth2.logIn(req, res, user, function (err){
+        if(err) return res.serverError(err);
         res.send(user);
       });
+
     })(req, res, next);
   },
 
@@ -599,65 +601,49 @@ module.exports = {
         if (err) {
           return res.send(500, { error: res.i18n('DB Error') });
         }
-
         // user found
-        if ( usr ) {
-
-          // activate user and login
-          usr.active = true;
-          usr.save(function(err){
-            if (err) {
-              return res.send(500, { error: res.i18n('DB Error') });
-            }
-
-            // destroy auth token after use
-            authToken.destroy(function(err) {
-              if (err) {
-                return res.send(500, { error: res.i18n('DB Error') });
-              }
-
-              req.logIn(usr, function(err){
-                if(err){
-                  sails.log.error('logIn error:', err);
-                  return res.negotiate(err);
-                }
-
-                return res.format({
-                 'text/html': function(){
-                    // TODO add a activation message
-                    //res.view( 'home/index.ejs');
-                    //res.redirect('/user/:id/activation-success');
-                    res.redirect('/');
-                 },
-
-                 'application/json': function(){
-                    console.log('send login result here ....');
-                    res.send(200, usr);
-                 }
-                });
-              });
-
-            });
-
-          });
-
-        } else {
+        if ( !usr ) {
           // user not found
           return responseForbiden();
         }
 
+        // activate user and login
+        usr.active = true;
+        usr.save(function(err){
+          if (err) {
+            return res.send(500, { error: res.i18n('DB Error') });
+          }
+
+          // destroy auth token after use
+          authToken.destroy(function (err) {
+            if (err) sails.log.error('Error on delete token', err);
+          });
+
+          // login and respond the user
+          weOauth2.logIn(req, res, usr, function(err){
+            if(err){
+              sails.log.error('logIn error:', err);
+              return res.negotiate(err);
+            }
+            return res.format({
+             'text/html': function() {
+                res.redirect('/');
+             },
+
+             'application/json': function(){
+                console.log('send login result here ....');
+                res.send(200, usr);
+             }
+            });
+          });
+        });
       });
-
-
     };
-
     AuthToken.validAuthToken(user.id, token, validAuthTokenRespose);
-
   },
 
   SendPasswordResetToken: function(req, res){
     console.log('TODO GetloginResetToken');
-
 
   },
 
@@ -807,8 +793,8 @@ module.exports = {
           sails.log.error('Error on change user active status', err, user);
           return res.negotiate(err);
         }
-        // login the user
-        req.logIn(user, function(err){
+
+        weOauth2.logIn(req, res, user, function (err) {
           if(err){
             sails.log.error('consumeForgotPasswordToken:logIn error', err);
             return res.negotiate(err);
@@ -828,8 +814,7 @@ module.exports = {
             res.redirect( '/auth/' + user.id + '/new-password/');
           }
         });
-      })
-
+      });
     });
   },
 
