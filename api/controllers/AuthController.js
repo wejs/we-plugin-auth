@@ -782,6 +782,12 @@ module.exports = {
 
       if(!user || !authToken){
         sails.log.warn('consumeForgotPasswordToken: TODO add a invalid token page and response');
+
+        req.flash('messages',[{
+          status: 'warning',
+          type: 'updated',
+          message: res.i18n('auth.consumeForgotPasswordToken.token.invalid')
+        }]);
         return res.redirect('/auth/forgot-password');
       }
       user.active = true;
