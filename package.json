@@ -13,7 +13,7 @@
     "validator": "^3.19.1",
     "we-helpers": "^0.0.6",
     "we-lib-error-parser": "0.0.1",
-    "we-oauth2": "0.0.16",
+    "we-oauth2": "0.0.17",
     "we-passport": "^0.1.2",
     "we-theme-engine": "0.0.10"
   },
