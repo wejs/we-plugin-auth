@@ -154,7 +154,7 @@ module.exports = {
         return res.redirect('/');
       }
 
-      req.login(req.user, function (err) {
+      weOauth2.logIn(req, res, req.user, function (err) {
         if (err) {
           return sails.log.error('oauth2Callback:Error on login', err);
         }
@@ -166,7 +166,6 @@ module.exports = {
 
         res.redirect('/');
       });
-
     })
   },
 
