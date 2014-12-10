@@ -1,9 +1,11 @@
 module.exports.auth = {
+  // in current we.js version OR is provider OR consumer
   isProvider: false,
   isConsumer: true,
+  enableLogin: true,
 
   cookieDomain: '.cdp.dev',
-  cookieName: 'cdp',
+  cookieName: 'wetoken',
   cookieMaxAge: 900000,
   cookieSecure: false,
 

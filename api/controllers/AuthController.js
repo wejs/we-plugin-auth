@@ -429,11 +429,9 @@ module.exports = {
    * Beware! this dont run socket.io disconect
    */
   logout: function (req, res) {
-    weOauth2.logOut(req, res, function(err){
+    weOauth2.logOut(req, res, function (err) {
       if (err)
         sails.log.error('Error on logout user', req.id, req.cookie);
-
-      req.logout();
       res.redirect('/');
     })
   },
