@@ -216,9 +216,10 @@ module.exports = {
       }
 
       var confirmPassword = req.param('confirmPassword');
+      var confirmEmail = req.param('confirmEmail');
       var errors;
 
-      errors = validSignup(user, confirmPassword, res);
+      errors = validSignup(user, confirmPassword, confirmEmail, res);
 
       if ( ! _.isEmpty(errors) ) {
         // error on data or confirm password
@@ -314,7 +315,8 @@ module.exports = {
     }
 
     var confirmPassword = req.param('confirmPassword');
-    var errors = validSignup(user, confirmPassword, res);
+    var confirmEmail = req.param('confirmEmail');
+    var errors = validSignup(user, confirmPassword, confirmEmail, res);
 
     if( ! _.isEmpty(errors) ){
       res.locals.messages = errors;
@@ -1160,7 +1162,7 @@ var loadUserAndAuthToken = function(uid, token, callback){
   });
 };
 
-function validSignup(user, confirmPassword, res){
+function validSignup(user, confirmPassword, confirmEmail, res){
   var errors = [];
 
   if(!user.email){
@@ -1172,6 +1174,16 @@ function validSignup(user, confirmPassword, res){
       message: res.i18n('Field <strong>email</strong> is required')
     });
   }
+
+  if(!confirmEmail){
+    errors.push({
+      type: 'validation',
+      status: 'danger',
+      field: 'confirmEmail',
+      rule: 'required',
+      message: res.i18n('Field <strong>Confirm email</strong> is required')
+    });
+  }  
 
   // check if password exist
   if(!user.password){
@@ -1203,6 +1215,16 @@ function validSignup(user, confirmPassword, res){
       message: res.i18n('<strong>New password</strong> and <strong>Confirm new password</strong> are different')
     });
   }
+
+  if(confirmEmail !== user.email){
+    errors.push({
+      type: 'validation',
+      status: 'danger',
+      field: 'email',
+      rule: 'required',
+      message: res.i18n('<strong>Email</strong> and <strong>Confirm email</strong> are different')
+    });
+  }  
 
   return errors;
 };
