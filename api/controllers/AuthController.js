@@ -542,7 +542,7 @@ module.exports = {
       }
 
       if(!user.active) {
-        sails.log.debug('AuthController:login:User not found', email);
+        sails.log.debug('AuthController:login:User not active', email);
         return res.send(401,{
           messages: [{
             status: 'warning',
