@@ -9,11 +9,11 @@
     "lodash": "^2.4.1",
     "node-uuid": "^1.4.1",
     "project-honeypot": "0.0.0",
+    "request": "^2.51.0",
     "string": "^2.1.0",
     "validator": "^3.19.1",
     "we-helpers": "^0.0.6",
     "we-lib-error-parser": "0.0.1",
-    "we-oauth2": "0.0.17",
     "we-passport": "^0.1.2",
     "we-theme-engine": "0.0.10"
   },

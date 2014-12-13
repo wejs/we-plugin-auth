@@ -4,6 +4,8 @@ module.exports.auth = {
   isConsumer: true,
   enableLogin: true,
 
+  providerDomain: true,
+
   cookieDomain: '.cdp.dev',
   cookieName: 'wetoken',
   cookieMaxAge: 900000,

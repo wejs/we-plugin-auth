@@ -6,7 +6,6 @@ var _ = require('lodash'),
   sendAccontActivationEmail = require('../../lib/email/accontActivationEmail.js'),
   async = require('async'),
   util = require('util'),
-  weOauth2 = require('we-oauth2'),
   wejsErrs = require('we-lib-error-parser');
 
 module.exports = {
@@ -147,14 +146,22 @@ module.exports = {
    * @param  {object} res express response
    */
   oauth2Callback: function(req, res) {
-    weOauth2.consumer.receiveToken(req, res, function() {
+    req._sails.auth.consumer.receiveToken(req, res, function() {
       if(!req.accessToken) {
         sails.log.warn('Invalid access token')
         // TODO add a better forbiden redirect to invalid tokens
         return res.redirect('/');
       }
 
-      weOauth2.logIn(req, res, req.user, function (err) {
+      if (sails.config.auth.providerDomain) {
+        var redirectSubUrl = req.param('redirectTo');
+        if (redirectSubUrl) {
+          res.redirect('/' + redirectSubUrl);
+        }
+        return res.redirect('/');
+      }
+
+      req._sails.auth.logIn(req, res, req.user, function (err) {
         if (err) {
           return sails.log.error('oauth2Callback:Error on login', err);
         }
@@ -165,14 +172,15 @@ module.exports = {
         }
 
         res.redirect('/');
-      });
+      });        
+   
     })
   },
 
   // Signup method GET function
   signupPage: function (req, res) {
     // log out user if it access register page
-    weOauth2.logOut(req, res, function(err) {
+    req._sails.auth.logOut(req, res, function(err) {
       if(err) sails.log.error(err);
       setDefaultRegisterLocals(req, res);
       res.view('auth/register');
@@ -276,7 +284,7 @@ module.exports = {
             });
           }
 
-          weOauth2.logIn(req, res, newUser, function (err) {
+          req._sails.auth.logIn(req, res, newUser, function (err) {
             if (err) {
               sails.log.error('logIn error: ', err);
               return res.negotiate(err);
@@ -409,7 +417,7 @@ module.exports = {
               return res.view('auth/requires-email-validation');
             });
           } else {
-            weOauth2.logIn(req, res, newUser, function(err){
+            req._sails.auth.logIn(req, res, newUser, function(err){
               if (err) {
                 sails.log.error('Error on login user after register', usr);
                 return res.serverError(err);
@@ -428,7 +436,7 @@ module.exports = {
    * Beware! this dont run socket.io disconect
    */
   logout: function (req, res) {
-    weOauth2.logOut(req, res, function (err) {
+    req._sails.auth.logOut(req, res, function (err) {
       if (err)
         sails.log.error('Error on logout user', req.id, req.cookie);
       res.redirect('/');
@@ -504,7 +512,7 @@ module.exports = {
         return res.badRequest({} ,'auth/login');
       }
 
-      weOauth2.logIn(req, res, user, function(err){
+      req._sails.auth.logIn(req, res, user, function(err){
         if (err) {
           sails.log.error('Error on login user after register', user, err);
           return res.serverError(err);
@@ -551,7 +559,7 @@ module.exports = {
         });
       }
 
-      weOauth2.logIn(req, res, user, function (err){
+      req._sails.auth.logIn(req, res, user, function (err){
         if(err) return res.serverError(err);
         res.send(user);
       });
@@ -617,7 +625,7 @@ module.exports = {
           });
 
           // login and respond the user
-          weOauth2.logIn(req, res, usr, function(err){
+          req._sails.auth.logIn(req, res, usr, function(err){
             if(err){
               sails.log.error('logIn error:', err);
               return res.negotiate(err);
@@ -797,7 +805,7 @@ module.exports = {
           return res.negotiate(err);
         }
 
-        weOauth2.logIn(req, res, user, function (err) {
+        req._sails.auth.logIn(req, res, user, function (err) {
           if(err){
             sails.log.error('consumeForgotPasswordToken:logIn error', err);
             return res.negotiate(err);
