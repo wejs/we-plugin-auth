@@ -775,6 +775,43 @@ module.exports = {
     });
   },
 
+  authToken: function (req, res){
+    if (!req.isAuthenticated()) return res.forbiden();
+
+    var email = req.param('email');
+
+    if(!email){
+      return res.badRequest('Email is required to request a password reset token.');
+    }
+
+    User.findOneByEmail(email)
+    .exec(function(error, user){
+      if (error) {
+        sails.log.error(error);
+        return res.serverError(error);
+      }
+
+      if (!user) return res.badRequest('unknow error trying to find a user');
+
+      AuthToken.create({
+        'userId': user.id,
+        tokenType: 'resetPassword'
+      }).exec(function(error, token) {
+        if(error){
+          sails.log.error(error);
+          return res.serverError(error);
+        }
+
+        if (!token) {
+          return res.serverError('unknow error on create auth token');
+        }
+
+        return res.json(token.getResetUrl());
+
+      });
+    });    
+  },
+
   consumeForgotPasswordToken: function(req, res){
     var uid = req.param('uid');
     var token = req.param('token');

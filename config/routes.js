@@ -110,5 +110,10 @@ module.exports.routes = {
   'get /user/:id/activate/:token':{
     controller    : 'AuthController',
     action        : 'activate'
+  },
+
+  'post /auth/auth-token':{
+    controller    : 'AuthController',
+    action        : 'authToken'
   }
 }
