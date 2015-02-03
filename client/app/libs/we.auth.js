@@ -19,8 +19,8 @@ Ember.auth = Ember.Object.extend({
   devLogin: false,
 
   serviceName: 'network',
-  loginUrl: 'http://accounts.wejs.org/login',
-  logoutUrl: 'http://accounts.wejs.org/logout',
+  loginUrl: '/login',
+  logoutUrl: '/logout',
   domain: '.wejs.org',
   token: {},
   init: function init () {
