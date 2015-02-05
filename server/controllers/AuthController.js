@@ -9,6 +9,9 @@ var _ = require('lodash'),
   wejsErrs = require('we-lib-error-parser');
 
 module.exports = {
+  _config: {
+    acl: false
+  },
 
   // getter for current logged in user
   current: function (req, res) {
@@ -172,8 +175,8 @@ module.exports = {
         }
 
         res.redirect('/');
-      });        
-   
+      });
+
     })
   },
 
@@ -1228,7 +1231,7 @@ function validSignup(user, confirmPassword, confirmEmail, res){
       rule: 'required',
       message: res.i18n('Field <strong>Confirm email</strong> is required')
     });
-  }  
+  }
 
   // check if password exist
   if(!user.password){
@@ -1269,7 +1272,7 @@ function validSignup(user, confirmPassword, confirmEmail, res){
       rule: 'required',
       message: res.i18n('<strong>Email</strong> and <strong>Confirm email</strong> are different')
     });
-  }  
+  }
 
   return errors;
 };
