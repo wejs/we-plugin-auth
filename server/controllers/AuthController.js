@@ -247,12 +247,12 @@ module.exports = {
 
         if ( usr ) {
           return res.send(400,{
-            messages: {
+            messages: [{
               status: 'danger',
               field: 'email',
               rule: 'email',
-              message: 'The email address is already registered in the system'
-            }
+              message: res.i18n('The email address is already registered in the system')
+            }]
           });
         }
 
@@ -895,7 +895,8 @@ module.exports = {
 
     var newPassword = req.param('newPassword');
     var rNewPassword = req.param('rNewPassword');
-    var userId = req.param('id');
+    // var userId = req.param('id');
+    var userId = req.user.id;
 
     // TODO move this access check to one policy
     if(!req.isAuthenticated() || req.user.id != userId) {

@@ -83,7 +83,7 @@ module.exports.routes = {
   },
 
   // new password
-  'post /auth/:id/new-password':{
+  'post /auth/new-password':{
     controller    : 'AuthController',
     action        : 'newPassword'
   },

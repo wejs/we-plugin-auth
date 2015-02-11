@@ -32,7 +32,6 @@ App.AuthRegisterController = Ember.Controller.extend({
       var self = this;
       var user = this.get('user');
       self.set('messages',[]);
-
       $.post(registerUrl,user)
       .done(function(data) {
         if (data.responseJSON && data.responseJSON.messages) {
