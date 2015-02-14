@@ -36,8 +36,8 @@ App.AuthRegisterController = Ember.Controller.extend({
       .done(function(data) {
         if (data.responseJSON && data.responseJSON.messages) {
           self.set('messages', data.responseJSON.messages);
-        } else if (data.user) {
-          location.href('/');
+        } else if (data.user || (data.active && data.id) ) {
+          location.href = '/';
         } else if (data.success) {
           self.set('messages', data.success);
         } else {
