@@ -658,10 +658,7 @@ module.exports = {
   },
 
   forgotPasswordPage: function(req, res) {
-    if (req.isAuthenticated()) return res.redirect('/');
-
     res.locals.emailSend = false;
-
 
     res.locals.messages = [];
     res.locals.user = req.param('user');
@@ -673,16 +670,14 @@ module.exports = {
   },
 
   forgotPassword: function(req, res) {
-    if (req.isAuthenticated()) return res.redirect('/');
     var sails = req._sails;
+    var email = req.param('email');
 
     res.locals.emailSend = false;
     res.locals.messages = [];
     res.locals.user = req.param('user');
     if (!res.locals.user) res.locals.user = {};
     res.locals.formAction = '/auth/forgot-password';
-
-    var email = req.param('email');
 
     if(!email){
       return res.badRequest('Email is required to request a password reset token.');
@@ -751,7 +746,7 @@ module.exports = {
           }
 
           sails.log.info('AuthResetPasswordEmail: Email resp:', emailResp);
-
+          
           if (req.wantsJSON) {
             return res.send({
               success: [{
@@ -804,16 +799,37 @@ module.exports = {
           sails.log.error(error);
           return res.serverError(error);
         }
-
         if (!token) {
           return res.serverError('unknow error on create auth token');
         }
-
         return res.json(token.getResetUrl());
-
       });
     });    
   },
+
+  /**
+   * Api endpoint to check if current user can change the password without old password
+   */
+  checkIfCanResetPassword: function(req, res) {
+    if(!req.isAuthenticated()) return res.forbiden();
+
+    if (req.session && req.session.resetPassword) {
+      res.status(200).send({
+        messages: [{
+          status: 'success',
+          message: res.i18n('auth.reset-password.success.can')
+        }]
+      })
+    } else {
+      res.status(403).send({
+        messages: [{
+          status: 'danger',
+          message: res.i18n('auth.reset-password.error.forbidden')
+        }]
+      })
+    }
+  },
+
 
   consumeForgotPasswordToken: function(req, res){
     var uid = req.param('uid');
@@ -890,6 +906,8 @@ module.exports = {
 
   newPassword: function (req, res, next) {
     if(!req.isAuthenticated()) return res.redirect('/');
+    if (!req.user.isAdmin || !req.session.resetPassword) return res.forbiden();
+
     var sails = req._sails;
     var User = sails.models.user;
 
@@ -1053,15 +1071,20 @@ module.exports = {
 
     var errors = [];
 
-    if (!oldPassword) {
-      errors.push({
-        type: 'validation',
-        field: 'oldPassword',
-        status: 'danger',
-        rule: 'required',
-        message: res.i18n("Field <strong>password</strong> is required")
-      });
+    // skip old password if have resetPassword flag in session
+    if (!req.session.resetPassword) {
+      if (!oldPassword) {
+        errors.push({
+          type: 'validation',
+          field: 'oldPassword',
+          status: 'danger',
+          rule: 'required',
+          message: res.i18n("Field <strong>password</strong> is required")
+        });
+      }
     }
+
+
 
     //sails.log.info('newPassword:' , newPassword , '| rNewPassword:' , rNewPassword);
 
@@ -1113,30 +1136,42 @@ module.exports = {
         return res.negotiate(error);
       }
 
-      user.verifyPassword(oldPassword, function(err, passwordOk) {
-        if (!passwordOk) {
-          var errors = [{
-            type: 'validation',
-            field: 'password',
-            rule: 'wrong',
-            status: 'danger',
-            message: res.i18n('The <strong>current password</strong> is invalid.')
-          }];
-          if (req.wantsJSON) {
-            // erro,r on data or confirm password
-            return res.send('400',{
-              messages: errors
-            });
-          } else {
-            res.locals.messages = errors;
-            return sails.controllers.auth.changePasswordPage(req, res, next);
+      // skip password check if have resetPassord flag actives
+      if (req.session.resetPassword) {
+        return changePassword();
+      } else {
+        user.verifyPassword(oldPassword, function(err, passwordOk) {
+          if (!passwordOk) {
+            var errors = [{
+              type: 'validation',
+              field: 'password',
+              rule: 'wrong',
+              status: 'danger',
+              message: res.i18n('The <strong>current password</strong> is invalid.')
+            }];
+            if (req.wantsJSON) {
+              // erro,r on data or confirm password
+              return res.send('400',{
+                messages: errors
+              });
+            } else {
+              res.locals.messages = errors;
+              return sails.controllers.auth.changePasswordPage(req, res, next);
+            }
           }
-        }
 
+          return changePassword();
+        });
+      }
+
+      function changePassword() {
         // set newPassword and save it for generate the password hash on update
         user.newPassword = newPassword;
         user.save(function(err) {
           if(err) sails.log.error('Error on save user to update password',err);
+
+          // Reset req.session.resetPassword to indicate that the operation has been completed
+          delete req.session.resetPassword;
 
           res.locals.messages = [{
             status: 'success',
@@ -1149,7 +1184,8 @@ module.exports = {
           }
           return sails.controllers.auth.changePasswordPage(req, res, next);
         });
-      });
+      }
+
     });
   }
 };

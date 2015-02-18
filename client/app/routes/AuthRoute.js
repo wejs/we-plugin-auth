@@ -4,7 +4,7 @@
   App.Router.map(function() {
     // auth
     this.route('authForgotPassword',{path: '/auth/forgot-password'});
-    this.route('authResetPasswordToken',{path: '/auth/reset-password/:token_id'});
+    this.route('authNewPassword',{path: '/auth/:id/new-password'});
     this.route('authChangePassword',{path: '/change-password'});
     this.route('authRegister',{path: '/signup'});
 
@@ -13,14 +13,26 @@
 
   App.AuthLoginRoute = Ember.Route.extend(App.UnAuthenticatedRouteMixin);
 
-  App.AuthResetPasswordTokenRoute = Ember.Route.extend({
+  App.AuthNewPasswordRoute = Ember.Route.extend({
     renderTemplate: function() {
-      this.render('auth/ResetPasswordToken');
+      this.render('auth/NewPassword');
+    },    
+    beforeModel: function() {
+      var self = this;
+      return new Ember.RSVP.Promise(function(resolve) {
+        $.ajax({
+          url: '/api/v1/auth/check-if-can-reset-password'
+        }).done(function(){
+          return resolve();
+        }).fail(function() {
+          self.transitionTo('authForgotPassword');
+        })
+      });
     },
-    model: function(params) {
+    model: function() {
       return {
-        user: App.currentUser,
-        tokenid: params['token_id']
+        user: {},
+        requestSend: false
       };
     }
   });

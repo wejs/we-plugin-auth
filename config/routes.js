@@ -82,6 +82,12 @@ module.exports.routes = {
     action: 'consumeForgotPasswordToken'
   },
 
+
+  '/api/v1/auth/check-if-can-reset-password': {
+    controller: 'AuthController',
+    action: 'checkIfCanResetPassword'
+  },  
+
   // new password
   'post /auth/new-password':{
     controller    : 'AuthController',
