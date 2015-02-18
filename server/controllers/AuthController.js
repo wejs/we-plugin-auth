@@ -1025,7 +1025,7 @@ module.exports = {
     var rNewPassword = req.param('rNewPassword');
     // var userId = req.param('id');
     var userId = req.user.id;
-
+    
     // TODO move this access check to one policy
     // if(!req.isAuthenticated() || req.user.id != userId) {
     if(!req.isAuthenticated()) {

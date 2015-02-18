@@ -1,7 +1,6 @@
 var registerUrl = '/signup';
 
-App.AuthRegisterController = Ember.Controller.extend({
-  user: {},
+App.AuthRegisterController = Ember.ObjectController.extend({
   messages: [],
 
   isVisible: true,

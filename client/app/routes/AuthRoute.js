@@ -5,7 +5,7 @@
     // auth
     this.route('authForgotPassword',{path: '/auth/forgot-password'});
     this.route('authResetPasswordToken',{path: '/auth/reset-password/:token_id'});
-    this.route('authChangePassword',{path: '/auth/change-password/'});
+    this.route('authChangePassword',{path: '/change-password'});
     this.route('authRegister',{path: '/signup'});
 
     this.route('authLogin',{path: '/login'});
@@ -52,11 +52,17 @@
     beforeModel: function (transition, queryParams) {
       this._super(transition, queryParams);
     },
+    model: function() {
+      return {
+        user: {
+          language: App.get('configs.client.language')
+        }
+      }
+    },
     renderTemplate: function() {
       this.render('auth/RegisterForm');
     },
     controllerName: 'AuthRegister'
   });
-
 
 })(jQuery, Ember, App);
