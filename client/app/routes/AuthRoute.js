@@ -6,9 +6,9 @@
     this.route('authForgotPassword',{path: '/auth/forgot-password'});
     this.route('authResetPasswordToken',{path: '/auth/reset-password/:token_id'});
     this.route('authChangePassword',{path: '/auth/change-password/'});
-    this.route('authRegister',{path: '/auth/register'});
+    this.route('authRegister',{path: '/signup'});
 
-    this.route('authLogin',{path: '/auth/login'});
+    this.route('authLogin',{path: '/login'});
   });
 
   App.AuthLoginRoute = Ember.Route.extend(App.UnAuthenticatedRouteMixin);
