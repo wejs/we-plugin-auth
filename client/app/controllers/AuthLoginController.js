@@ -7,29 +7,28 @@ App.AuthLoginController = Ember.ObjectController.extend({
     login: function() {
       NProgress.start();
       NProgress.set(0.5);
-      var _this = this;
+      var self = this;
+      
       $.post( this.get('loginUrl') ,{
         email: this.get('email'),
         password: this.get('password')
       })
       .done(function(data) {
         NProgress.done(true);
-        if(data.id){
-          location.reload();
-        }
+        // if sucessfull login reload the page
+        location.reload();
       })
       .fail(function(data) {
         NProgress.done(true);
-
         if (data.responseText) {
           var responseJSON = jQuery.parseJSON(data.responseText);
-          console.log('responseJSON', responseJSON);
-          _this.set('messages', [{
+          // console.log('responseJSON', responseJSON);
+          self.set('messages', [{
             status: 'danger',
             message: responseJSON.messages[0].message
           }]);
         } else {
-          console.error( 'Error on login',data);
+          Ember.Logger.error( 'Error on login',data);
         }
       });
     },
