@@ -22,7 +22,7 @@ App.AuthNewPasswordController = Ember.ObjectController.extend({
         rNewPassword: this.get('rNewPassword')
       })
       .done(function(data) {
-        alert(Ember.get(data.messages[0].message));
+        alert(data.messages[0].message);
         NProgress.done(true);
         self.transitionToRoute('home');
       })

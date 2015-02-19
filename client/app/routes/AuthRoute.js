@@ -25,7 +25,7 @@ App.AuthNewPasswordRoute = Ember.Route.extend({
   renderTemplate: function() {
     this.render('auth/NewPassword');
   },    
-  beforeModel: function() {
+  beforeModel: function(transition) {
     var self = this;
     return new Ember.RSVP.Promise(function(resolve) {
       $.ajax({
@@ -33,6 +33,7 @@ App.AuthNewPasswordRoute = Ember.Route.extend({
       }).done(function(){
         return resolve();
       }).fail(function() {
+        transition.abort();
         self.transitionTo('authForgotPassword');
       })
     });
@@ -40,11 +41,12 @@ App.AuthNewPasswordRoute = Ember.Route.extend({
   model: function(params) {
     return {
       currentUser: App.currentUser,
-      userId: params['userId'],     
+      userId: params['id'],     
       requestSend: false
     };
   },
-  afterModel: function (model){
+  afterModel: function (model) {
+    // user cant update password from others users un server api
     if (model.currentUser.get('id') != model.userId) this.transitionTo('home');
   }  
 });

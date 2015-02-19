@@ -67,7 +67,7 @@ module.exports = {
     User.findOneById(req.user.id).exec(function (err, usr){
       if (err) {
         sails.log.error('updateCurrentUser: Error on find user by id',err);
-        return res.serverError({ error: res.i18n('Error') });
+        return res.serverError({ error: req.__('Error') });
       }
 
       // Look up the model
@@ -98,7 +98,7 @@ module.exports = {
               if (err.ValidationError.hasOwnProperty(attr)) {
                 res.locals.messages = [{
                   status: 'danger',
-                  message: res.i18n('auth.register.error.' +
+                  message: req.__('auth.register.error.' +
                     attr +
                     '.ivalid',values)
                 }];
@@ -108,14 +108,14 @@ module.exports = {
             return res.badRequest({}, 'user/account');
           }else {
             return res.send(500, {
-              error: res.i18n('DB Error')
+              error: req.__('DB Error')
             });
           }
 
           sails.log.error('Error on update user account', err);
           res.locals.messages = [{
             status: 'danger',
-            message: res.i18n('auth.login.password.and.email.required', values)
+            message: req.__('auth.login.password.and.email.required', values)
           }];
           return res.negotiate('user/account', err);
         }
@@ -135,7 +135,7 @@ module.exports = {
 
         req.flash('messages',[{
           status: 'success',
-          message: res.i18n('updateAccountData.success')
+          message: req.__('updateAccountData.success')
         }]);
 
         return sails.controllers.auth.current(req, res);
@@ -243,7 +243,7 @@ module.exports = {
       User.findOneByEmail(user.email).exec(function (err, usr){
         if (err) {
           sails.log.error('Error on find user by email.',err);
-          return res.send(500, { error: res.i18n('Error') });
+          return res.send(500, { error: req.__('Error') });
         }
 
         if ( usr ) {
@@ -252,7 +252,7 @@ module.exports = {
               status: 'danger',
               field: 'email',
               rule: 'email',
-              message: res.i18n('The email address is already registered in the system')
+              message: req.__('The email address is already registered in the system')
             }]
           });
         }
@@ -281,7 +281,7 @@ module.exports = {
                 messages: [
                   {
                     status: 'warning',
-                    message: res.i18n('Account created but is need an email validation\n, One email was send to %s with instructions to validate your account', newUser.email)
+                    message: req.__('Account created but is need an email validation\n, One email was send to %s with instructions to validate your account', newUser.email)
                   }
                 ]
               });
@@ -341,7 +341,7 @@ module.exports = {
         sails.log.error('Error on find user by username',err);
         res.locals.messages = [{
           status: 'danger',
-          message: res.i18n('auth.register.error.unknow', { email: user.email })
+          message: req.__('auth.register.error.unknow', { email: user.email })
         }];
         return res.serverError({}, 'auth/register');
       }
@@ -350,7 +350,7 @@ module.exports = {
       if ( usr ) {
         res.locals.messages = [{
           status: 'danger',
-          message: res.i18n('auth.register.error.username.registered', { username: user.username })
+          message: req.__('auth.register.error.username.registered', { username: user.username })
         }];
         return res.badRequest({}, 'auth/register');
       }
@@ -360,7 +360,7 @@ module.exports = {
           sails.log.error('Error on find user by username.',err);
           res.locals.messages = [{
             status: 'danger',
-            message: res.i18n('auth.register.error.unknow', { email: user.email })
+            message: req.__('auth.register.error.unknow', { email: user.email })
           }];
           return res.serverError({}, 'auth/register');
         }
@@ -369,7 +369,7 @@ module.exports = {
         if ( usr ) {
           res.locals.messages = [{
             status: 'danger',
-            message: res.i18n('auth.register.error.email.registered', { email: user.email })
+            message: req.__('auth.register.error.email.registered', { email: user.email })
           }];
           return res.badRequest({}, 'auth/register');
         }
@@ -383,7 +383,7 @@ module.exports = {
                 if (error.ValidationError.hasOwnProperty(attr)) {
                   res.locals.messages = [{
                     status: 'danger',
-                    message: res.i18n('auth.register.error.' +
+                    message: req.__('auth.register.error.' +
                       attr +
                       '.ivalid', { value: user[attr] })
                   }];
@@ -393,7 +393,7 @@ module.exports = {
               return res.badRequest({}, 'auth/register');
             }else {
               return res.send(500, {
-                error: res.i18n('DB Error')
+                error: req.__('DB Error')
               });
             }
           }
@@ -405,7 +405,7 @@ module.exports = {
                 sails.log.error('Action:Login sendAccontActivationEmail:', err);
                 res.locals.messages = [{
                   status: 'danger',
-                  message: res.i18n('auth.register.send.email.error', { email: newUser.email })
+                  message: req.__('auth.register.send.email.error', { email: newUser.email })
                 }];
                 return res.serverError(newUser, 'auth/register');
               }
@@ -413,7 +413,7 @@ module.exports = {
                 return res.send('201',{
                   success: [{
                     status: 'warning',
-                    message: res.i18n('Account created but is need an email validation\n,'+
+                    message: req.__('Account created but is need an email validation\n,'+
                       ' One email was send to %s with instructions to validate your account', newUser.email)
                   }]
                 });
@@ -487,7 +487,7 @@ module.exports = {
       sails.log.debug('AuthController:login:Password and email is required', email);
       res.locals.messages = [{
         status: 'danger',
-        message: res.i18n('auth.login.password.and.email.required', { email: email })
+        message: req.__('auth.login.password.and.email.required', { email: email })
       }];
       return res.serverError({} ,'auth/login');
     }
@@ -502,7 +502,7 @@ module.exports = {
         if (info.message === 'Invalid password') {
           res.locals.messages = [{
             status: 'danger',
-            message: res.i18n('auth.login.password.wrong', { email: email })
+            message: req.__('auth.login.password.wrong', { email: email })
           }];
           return res.badRequest({} ,'auth/login');
         }
@@ -510,7 +510,7 @@ module.exports = {
         sails.log.verbose('AuthController:login:User not found', email);
         res.locals.messages = [{
           status: 'danger',
-          message: res.i18n('auth.login.user.not.found', { email: email })
+          message: req.__('auth.login.user.not.found', { email: email })
         }];
         return res.badRequest({} ,'auth/login');
       }
@@ -518,7 +518,7 @@ module.exports = {
       if(!user.active) {
         res.locals.messages = [{
           status: 'warning',
-          message: res.i18n('auth.login.user.not.active', { email: email })
+          message: req.__('auth.login.user.not.active', { email: email })
         }];
         return res.badRequest({} ,'auth/login');
       }
@@ -605,7 +605,7 @@ module.exports = {
           errors: [
             {
               type: 'authentication',
-              message: res.i18n('Forbiden')
+              message: req.__('Forbiden')
             }
           ]
         }
@@ -614,7 +614,7 @@ module.exports = {
 
     var validAuthTokenRespose = function (err, result, authToken){
       if (err) {
-        return res.send(500, { error: res.i18n('Error') });
+        return res.send(500, { error: req.__('Error') });
       }
 
       // token is invalid
@@ -625,7 +625,7 @@ module.exports = {
       // token is valid then get user form db
       User.findOneById(user.id).exec(function(err, usr) {
         if (err) {
-          return res.send(500, { error: res.i18n('DB Error') });
+          return res.send(500, { error: req.__('DB Error') });
         }
         // user found
         if ( !usr ) {
@@ -637,7 +637,7 @@ module.exports = {
         usr.active = true;
         usr.save(function(err){
           if (err) {
-            return res.send(500, { error: res.i18n('DB Error') });
+            return res.send(500, { error: req.__('DB Error') });
           }
 
           // destroy auth token after use
@@ -778,7 +778,7 @@ module.exports = {
               success: [{
                 type: 'email_send',
                 status: 'success',
-                message: res.i18n('auth.forgot-password.email.send')
+                message: req.__('auth.forgot-password.email.send')
               }]
             });
           }
@@ -787,7 +787,7 @@ module.exports = {
           req.flash('messages',[{
             type: 'email_send',
             status: 'success',
-            message: res.i18n('auth.forgot-password.email.send', {
+            message: req.__('auth.forgot-password.email.send', {
               displayName: user.displayName,
               email: email,
             })
@@ -843,14 +843,14 @@ module.exports = {
       res.status(200).send({
         messages: [{
           status: 'success',
-          message: res.i18n('auth.reset-password.success.can')
+          message: req.__('auth.reset-password.success.can')
         }]
       })
     } else {
       res.status(403).send({
         messages: [{
           status: 'danger',
-          message: res.i18n('auth.reset-password.error.forbidden')
+          message: req.__('auth.reset-password.error.forbidden')
         }]
       })
     }
@@ -879,7 +879,7 @@ module.exports = {
         req.flash('messages',[{
           status: 'warning',
           type: 'updated',
-          message: res.i18n('auth.consumeForgotPasswordToken.token.invalid')
+          message: req.__('auth.consumeForgotPasswordToken.token.invalid')
         }]);
         return res.redirect('/auth/forgot-password');
       }
@@ -958,7 +958,7 @@ module.exports = {
             errors: [
               {
                 type: 'authentication',
-                message: res.i18n('Forbiden')
+                message: req.__('Forbiden')
               }
             ]
           }
@@ -967,7 +967,7 @@ module.exports = {
         res.locals.messages = [{
           status: 'danger',
           type: 'forbiden',
-          message: res.i18n('auth.fochange-password.forbiden')
+          message: req.__('auth.fochange-password.forbiden')
         }];
         return sails.controllers.auth.newPasswordPage(req, res, next);
       }
@@ -984,7 +984,7 @@ module.exports = {
         field: 'rNewPassword',
         rule: 'required',
         status: 'danger',
-        message: res.i18n('Field <strong>Confirm new password</strong> and <strong>New Password</strong> is required')
+        message: req.__('Field <strong>Confirm new password</strong> and <strong>New Password</strong> is required')
       });
     }
 
@@ -994,7 +994,7 @@ module.exports = {
         field: 'newPassword',
         rule: 'required',
         status: 'danger',
-        message: res.i18n('<strong>New password</strong> and <strong>Confirm new password</strong> are different')
+        message: req.__('<strong>New password</strong> and <strong>Confirm new password</strong> are different')
       });
     }
 
@@ -1034,7 +1034,7 @@ module.exports = {
         req.flash('messages',[{
           status: 'success',
           type: 'updated',
-          message: res.i18n('New password set successfully')
+          message: req.__('New password set successfully')
         }]);
 
         // Reset req.session.resetPassword to indicate that the operation has been completed
@@ -1081,26 +1081,16 @@ module.exports = {
     // TODO move this access check to one policy
     // if(!req.isAuthenticated() || req.user.id != userId) {
     if(!req.isAuthenticated()) {
+      res.locals.messages = [{
+        status: 'danger',
+        type: 'forbiden',
+        message: req.__('auth.change-password.forbiden')
+      }];
       if (req.wantsJSON) {
-        return res.send(403, {
-          responseMessage: {
-            errors: [
-              {
-                type: 'authentication',
-                message: res.i18n('Forbiden')
-              }
-            ]
-          }
-        });
+        return res.send(403, { messages: res.locals.messages });
       } else {
-        res.locals.messages = [{
-          status: 'danger',
-          type: 'forbiden',
-          message: res.i18n('auth.fochange-password.forbiden')
-        }];
         return sails.controllers.auth.changePasswordPage(req, res, next);
       }
-
     }
 
     var errors = [];
@@ -1113,14 +1103,10 @@ module.exports = {
           field: 'oldPassword',
           status: 'danger',
           rule: 'required',
-          message: res.i18n("Field <strong>password</strong> is required")
+          message: req.__("field.password.required")
         });
       }
     }
-
-
-
-    //sails.log.info('newPassword:' , newPassword , '| rNewPassword:' , rNewPassword);
 
     if( _.isEmpty(newPassword) || _.isEmpty(rNewPassword) ){
       errors.push({
@@ -1128,7 +1114,7 @@ module.exports = {
         field: 'rNewPassword',
         rule: 'required',
         status: 'danger',
-        message: res.i18n('Field <strong>Confirm new password</strong> and <strong>New Password</strong> is required')
+        message: req.__('field.confirm-password.password.required')
       });
     }
 
@@ -1138,34 +1124,30 @@ module.exports = {
         field: 'newPassword',
         rule: 'required',
         status: 'danger',
-        message: res.i18n('<strong>New password</strong> and <strong>Confirm new password</strong> are different')
+        message: req.__('field.password.confirm-password.diferent')
       });
     }
 
     if( ! _.isEmpty(errors) ) {
+      res.locals.messages = errors;
       if (req.wantsJSON) {
         // erro,r on data or confirm password
         return res.send('400',{
-          messages: errors
+          messages: res.locals.messages
         });
       } else {
-        res.locals.messages = [];
-        for (var i = 0; i < errors.length; i++) {
-          errors[i].status = 'danger';
-          res.locals.messages.push(errors[i]);
-        }
         return sails.controllers.auth.changePasswordPage(req, res, next);
       }
     }
 
     User.findOneById(userId)
     .exec(function(error, user){
-      if(error){
+      if (error) {
         sails.log.error('resetPassword: Error on get user', user);
         return res.negotiate(error);
       }
 
-      if(!user){
+      if (!user) {
         sails.log.info('resetPassword: User not found', user);
         return res.negotiate(error);
       }
@@ -1181,7 +1163,7 @@ module.exports = {
               field: 'password',
               rule: 'wrong',
               status: 'danger',
-              message: res.i18n('The <strong>current password</strong> is invalid.')
+              message: req.__('field.password.invalid')
             }];
             if (req.wantsJSON) {
               // erro,r on data or confirm password
@@ -1210,11 +1192,11 @@ module.exports = {
           res.locals.messages = [{
             status: 'success',
             type: 'updated',
-            message: res.i18n('Password changed successfully.')
+            message: req.__('auth.change-password.success')
           }];
 
           if (req.wantsJSON) {
-            return res.send('200',{messages: res.locals.messages});
+            return res.send('200',{ messages: res.locals.messages });
           }
           return sails.controllers.auth.changePasswordPage(req, res, next);
         });
@@ -1290,7 +1272,7 @@ function validSignup(user, confirmPassword, confirmEmail, res){
       status: 'danger',
       field: 'email',
       rule: 'required',
-      message: res.i18n('Field <strong>email</strong> is required')
+      message: req.__('Field <strong>email</strong> is required')
     });
   }
 
@@ -1300,7 +1282,7 @@ function validSignup(user, confirmPassword, confirmEmail, res){
       status: 'danger',
       field: 'confirmEmail',
       rule: 'required',
-      message: res.i18n('Field <strong>Confirm email</strong> is required')
+      message: req.__('Field <strong>Confirm email</strong> is required')
     });
   }
 
@@ -1311,7 +1293,7 @@ function validSignup(user, confirmPassword, confirmEmail, res){
       status: 'danger',
       field: 'password',
       rule: 'required',
-      message: res.i18n('Field <strong>password</strong> is required')
+      message: req.__('Field <strong>password</strong> is required')
     });
   }
 
@@ -1321,7 +1303,7 @@ function validSignup(user, confirmPassword, confirmEmail, res){
       status: 'danger',
       field: 'confirmPassword',
       rule: 'required',
-      message: res.i18n('Field <strong>Confirm new password</strong> is required')
+      message: req.__('Field <strong>Confirm new password</strong> is required')
     });
   }
 
@@ -1331,7 +1313,7 @@ function validSignup(user, confirmPassword, confirmEmail, res){
       status: 'danger',
       field: 'password',
       rule: 'required',
-      message: res.i18n('<strong>New password</strong> and <strong>Confirm new password</strong> are different')
+      message: req.__('<strong>New password</strong> and <strong>Confirm new password</strong> are different')
     });
   }
 
@@ -1341,7 +1323,7 @@ function validSignup(user, confirmPassword, confirmEmail, res){
       status: 'danger',
       field: 'email',
       rule: 'required',
-      message: res.i18n('<strong>Email</strong> and <strong>Confirm email</strong> are different')
+      message: req.__('<strong>Email</strong> and <strong>Confirm email</strong> are different')
     });
   }
 
@@ -1372,7 +1354,7 @@ function checkIfIsSpamInRegister(req, res, done) {
         return res.send('400',{
           messages: [{
             status: 'danger',
-            message: res.i18n('auth.register.error.spam')
+            message: req.__('auth.register.error.spam')
           }]
         });
       }
@@ -1380,7 +1362,7 @@ function checkIfIsSpamInRegister(req, res, done) {
       res.locals.isSpam = isSpam;
       res.locals.messages = [{
         status: 'danger',
-        message: res.i18n('auth.register.error.spam')
+        message: req.__('auth.register.error.spam')
       }];
       return res.badRequest({}, 'auth/register');
     }
