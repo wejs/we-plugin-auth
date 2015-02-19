@@ -1,6 +1,7 @@
 // api/controllers/AuthController.js
 
 var _ = require('lodash'),
+  // TODO move this passport feature to sails.auth object
   passport = require('we-passport').getPassport(),
   actionUtil = require('we-helpers').actionUtil,
   sendAccontActivationEmail = require('../../lib/email/accontActivationEmail.js'),
@@ -457,6 +458,11 @@ module.exports = {
     res.view('auth/login');
   },
 
+  /**
+   * Static POST request for login
+   *
+   * This action receives the static requests and returns a static sails.js page
+   */
   staticPostLogin: function (req, res, next) {
     var sails = req._sails;
 
@@ -527,45 +533,55 @@ module.exports = {
     })(req, res, next);
   },
 
+  /**
+   * Login API 
+   *
+   * This action receives the static and JSON request
+   */
   login: function (req, res, next) {
-    var sails = req._sails;
-
     var email = req.param('email');
 
     // if dont wants json respond it with static signup function
     // TODO change this code to use sails.js 0.10.X custom respose feature
-    if (! req.wantsJSON) {
-      return sails.controllers.auth.staticPostLogin(req, res, next);
+    if (!req.wantsJSON) {
+      return req._sails.controllers.auth.staticPostLogin(req, res, next);
     }
 
+    // TODO change this passport .authenticate to sails.auth.authenticate
     passport.authenticate('local', function(err, user, info) {
       if (err) {
-        sails.log.error('AuthController:login:Error on get user ', err, email);
-        return res.serverError();
-      }
-
-      if(!user) {
-        sails.log.debug('AuthController:login:User not found', email);
-        return res.send(401,{
+        req._sails.log.error('AuthController:login:Error on get user ', err, email);
+        return  res.send(500, {
           messages: [{
-            status: 'warning',
-            message: info.message
+            status: 'danger',
+            message: req.__('unknow.error')
           }]
         });
       }
 
-      if(!user.active) {
-        sails.log.debug('AuthController:login:User not active', email);
+      if (!user) {
+        req._sails.log.debug('AuthController:login:User not found', email);
         return res.send(401,{
           messages: [{
             status: 'warning',
-            message: 'auth.login.user.not.active'
+            message: req.__('auth.login.user.not-found', { email: email })
           }]
         });
       }
 
-      req._sails.auth.logIn(req, res, user, function (err){
+      if (!user.active) {
+        req._sails.log.debug('AuthController:login:User not active', email);
+        return res.send(401,{
+          messages: [{
+            status: 'warning',
+            message: req.__('auth.login.user.not.active', {email: email})
+          }]
+        });
+      }
+
+      req._sails.auth.logIn(req, res, user, function (err) {
         if(err) return res.serverError(err);
+        req._sails.log.info('AuthController:login: user autheticated:', user.id, user.username);
         res.send(user);
       });
 
