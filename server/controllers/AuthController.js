@@ -685,8 +685,10 @@ module.exports = {
     res.view('auth/forgot-password');
   },
 
+  /**
+   * Forgot password API endpoint
+   */
   forgotPassword: function(req, res) {
-    var sails = req._sails;
     var email = req.param('email');
 
     res.locals.emailSend = false;
@@ -695,50 +697,58 @@ module.exports = {
     if (!res.locals.user) res.locals.user = {};
     res.locals.formAction = '/auth/forgot-password';
 
-    if(!email){
-      return res.badRequest('Email is required to request a password reset token.');
+    if (!email) {
+      return res.status(401).send({
+        messages: [{
+          status: 'warning',
+          message: req.__('auth.forgot-password.field.email.required')
+        }]
+      });
     }
 
     User.findOneByEmail(email)
     .exec(function(error, user){
       if (error) {
-        sails.log.error(error);
-        return res.serverError(error);
+        req._sails.log.error('AuthController:forgotPassword: Error on find user by email', error);
+        return res.status(500).send({
+          messages: [{
+            status: 'danger',
+            message: req.__('unknow.error')
+          }]
+        });
       }
 
       if (!user) {
-        res.locals.messages = [{
-          status: 'danger',
-          type: 'not_found',
-          message: res.i18n('auth.forgot-password.user.not-found')
-        }];
-        return res.badRequest({}, 'auth/forgot-password');
+        req._sails.log.warn('AuthController:forgotPassword: User not found', email);
+        return res.status(401).send({
+          messages: [{
+            status: 'danger',
+            type: 'not_found',
+            message: req.__('auth.forgot-password.user.not-found')
+          }]
+        });
       }
 
       AuthToken.create({
         'userId': user.id,
         tokenType: 'resetPassword'
       }).exec(function(error, token) {
-        if(error){
-          sails.log.error(error);
-          return res.serverError(error);
+        if (error || !token) {
+          req._sails.log.error('AuthController:forgotPassword: Error on create authtoken', error);
+          return res.status(500).send({
+            messages: [{
+              status: 'danger',
+              message: req.__('unknow.error')
+            }]
+          });
         }
 
-        if (!token) {
-          return res.serverError('unknow error on create auth token');
-        }
-
-        var appName;
-        if (sails.config.appName) {
-          appName = sails.config.appName;
-        } else {
-          appName = 'We.js';
-        }
+        var appName = req._sails.config.appName;
 
         var options = {
           email: user.email,
-          subject: appName + ' - ' + res.i18n('Reset password'),
-          from: sails.config.email.siteEmail
+          subject: appName + ' - ' + req.__('auth.forgot-password.reset-password'),
+          from: req._sails.config.email.siteEmail
         };
 
         user = user.toJSON();

@@ -14,12 +14,10 @@ App.AuthLoginController = Ember.ObjectController.extend({
         password: this.get('password')
       })
       .done(function(data) {
-        NProgress.done(true);
         // if sucessfull login reload the page
         location.reload();
       })
       .fail(function(data) {
-        NProgress.done(true);
         if (data.responseText) {
           var responseJSON = jQuery.parseJSON(data.responseText);
           // console.log('responseJSON', responseJSON);
@@ -30,6 +28,8 @@ App.AuthLoginController = Ember.ObjectController.extend({
         } else {
           Ember.Logger.error( 'Error on login',data);
         }
+      }).always(function() {
+        NProgress.done(true);
       });
     },
     goToForgotPaswordPage: function(){
