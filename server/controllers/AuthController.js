@@ -857,7 +857,7 @@ module.exports = {
   },
 
 
-  consumeForgotPasswordToken: function(req, res){
+  consumeForgotPasswordToken: function (req, res) {
     var uid = req.param('uid');
     var token = req.param('token');
     var sails = req._sails;
@@ -868,11 +868,12 @@ module.exports = {
     }
 
     loadUserAndAuthToken(uid, token, function(error, user, authToken){
-      if(error){
-        return res.negotiate(error);
+      if (error) {
+        sails.log.error('AuthController:consumeForgotPasswordToken: Error on loadUserAndAuthToken', error);
+        return res.serverError(error);
       }
 
-      if(!user || !authToken){
+      if (!user || !authToken) {
         sails.log.warn('consumeForgotPasswordToken: TODO add a invalid token page and response');
 
         req.flash('messages',[{
@@ -882,23 +883,30 @@ module.exports = {
         }]);
         return res.redirect('/auth/forgot-password');
       }
-      user.active = true;
-      user.save(function(err){
-        if(err){
-          sails.log.error('Error on change user active status', err, user);
-          return res.negotiate(err);
-        }
 
-        req._sails.auth.logIn(req, res, user, function (err) {
-          if(err){
-            sails.log.error('consumeForgotPasswordToken:logIn error', err);
-            return res.negotiate(err);
+      if (user.active) {
+        return respondToUser();
+      } else {
+        // If user dont are active, change and salve the active status
+        user.active = true;
+        user.save(function (err) {
+          if (err) {
+            sails.log.error('Error on change user active status', err, user);
+            return res.serverError(err);
           }
-
+          respondToUser();
+        });
+      }
+     
+      function respondToUser() {
+        req._sails.auth.logIn(req, res, user, function (err) {
+          if (err) {
+            sails.log.error('AuthController:consumeForgotPasswordToken:logIn error', err);
+            return res.serverError(err);
+          }
           // consumes the token
           authToken.isValid = false;
           authToken.save();
-
           // set session variable req.session.resetPassword to indicate that there is a new password to be defined
           req.session.resetPassword = true;
 
@@ -909,7 +917,7 @@ module.exports = {
             res.redirect( '/auth/' + user.id + '/new-password/');
           }
         });
-      });
+      }
     });
   },
 
