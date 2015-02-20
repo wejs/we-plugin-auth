@@ -231,7 +231,7 @@ module.exports = {
       var confirmEmail = req.param('confirmEmail');
       var errors;
 
-      errors = validSignup(user, confirmPassword, confirmEmail, res);
+      errors = validSignup(user, confirmPassword, confirmEmail, req, res);
 
       if ( ! _.isEmpty(errors) ) {
         // error on data or confirm password
@@ -328,7 +328,7 @@ module.exports = {
 
     var confirmPassword = req.param('confirmPassword');
     var confirmEmail = req.param('confirmEmail');
-    var errors = validSignup(user, confirmPassword, confirmEmail, res);
+    var errors = validSignup(user, confirmPassword, confirmEmail, req, res);
 
     if( ! _.isEmpty(errors) ){
       res.locals.messages = errors;
@@ -1263,7 +1263,7 @@ var loadUserAndAuthToken = function(uid, token, callback){
   });
 };
 
-function validSignup(user, confirmPassword, confirmEmail, res){
+function validSignup(user, confirmPassword, confirmEmail, req, res){
   var errors = [];
 
   if(!user.email){
