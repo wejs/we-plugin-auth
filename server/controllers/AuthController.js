@@ -940,7 +940,7 @@ module.exports = {
 
   newPassword: function (req, res, next) {
     if(!req.isAuthenticated()) return res.redirect('/');
-    if (!req.user.isAdmin || !req.session.resetPassword) return res.forbiden();
+    if (!req.user.isAdmin && !req.session.resetPassword) return res.forbidden();
 
     var sails = req._sails;
     var User = sails.models.user;
