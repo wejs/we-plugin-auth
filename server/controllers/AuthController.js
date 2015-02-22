@@ -753,6 +753,10 @@ module.exports = {
 
         user = user.toJSON();
 
+        if (!user.displayName) {
+          user.displayName = user.username;
+        }
+
         var templateVariables = {
           user: {
             name: user.username,
