@@ -231,7 +231,7 @@ module.exports = {
       var confirmEmail = req.param('confirmEmail');
       var errors;
 
-      errors = validSignup(user, confirmPassword, confirmEmail, res);
+      errors = validSignup(user, confirmPassword, confirmEmail, req, res);
 
       if ( ! _.isEmpty(errors) ) {
         // error on data or confirm password
@@ -328,7 +328,7 @@ module.exports = {
 
     var confirmPassword = req.param('confirmPassword');
     var confirmEmail = req.param('confirmEmail');
-    var errors = validSignup(user, confirmPassword, confirmEmail, res);
+    var errors = validSignup(user, confirmPassword, confirmEmail, req, res);
 
     if( ! _.isEmpty(errors) ){
       res.locals.messages = errors;
@@ -944,7 +944,7 @@ module.exports = {
 
   newPassword: function (req, res, next) {
     if(!req.isAuthenticated()) return res.redirect('/');
-    if (!req.user.isAdmin || !req.session.resetPassword) return res.forbiden();
+    if (!req.user.isAdmin && !req.session.resetPassword) return res.forbidden();
 
     var sails = req._sails;
     var User = sails.models.user;
@@ -1267,7 +1267,7 @@ var loadUserAndAuthToken = function(uid, token, callback){
   });
 };
 
-function validSignup(user, confirmPassword, confirmEmail, res){
+function validSignup(user, confirmPassword, confirmEmail, req, res){
   var errors = [];
 
   if(!user.email){
