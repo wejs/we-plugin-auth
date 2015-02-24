@@ -1193,16 +1193,51 @@ module.exports = {
           // Reset req.session.resetPassword to indicate that the operation has been completed
           delete req.session.resetPassword;
 
-          res.locals.messages = [{
-            status: 'success',
-            type: 'updated',
-            message: req.__('auth.change-password.success')
-          }];
+          var appName = req._sails.config.appName;
 
-          if (req.wantsJSON) {
-            return res.send('200',{ messages: res.locals.messages });
+          var options = {
+            email: user.email,
+            subject: appName + ' - ' + req.__('auth.change-password.reset-password'),
+            from: req._sails.config.email.siteEmail
+          };
+
+          user = user.toJSON();
+
+          if (!user.displayName) {
+            user.displayName = user.username;
           }
-          return sails.controllers.auth.changePasswordPage(req, res, next);
+
+          var templateVariables = {
+            user: {
+              name: user.username,
+              displayName: user.displayName
+            },
+            site: {
+              name: appName,
+              slogan: 'MIMI one slogan here',
+              url: sails.config.hostname
+            }
+          };          
+
+          sails.email.sendEmail(options, 'AuthChangePasswordEmail', templateVariables, function(err , emailResp){
+            if (err) {
+              sails.log.error('Error on send email AuthChangePasswordEmail', err, emailResp);
+            }
+
+            res.locals.messages = [{
+              status: 'success',
+              type: 'updated',
+              message: req.__('auth.change-password.success')
+            }];
+
+            sails.log.info('AuthChangePasswordEmail: Email resp:', emailResp);
+
+            if (req.wantsJSON) {
+              return res.send('200',{ messages: res.locals.messages });
+            }
+            return sails.controllers.auth.changePasswordPage(req, res, next);
+
+          });
         });
       }
 
