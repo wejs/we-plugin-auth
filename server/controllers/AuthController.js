@@ -878,7 +878,7 @@ module.exports = {
       }
 
       if (!user || !authToken) {
-        sails.log.warn('consumeForgotPasswordToken: TODO add a invalid token page and response');
+        sails.log.warn('consumeForgotPasswordToken: invalid token: ', token, ' for uid: ', uid);
 
         req.flash('messages',[{
           status: 'warning',
