@@ -500,6 +500,7 @@ module.exports = {
 
       if (!user) {
         if (info.message === 'Invalid password') {
+          sails.log.info('AuthController:login:Wrong password for user:', email);
           res.locals.messages = [{
             status: 'danger',
             message: req.__('auth.login.password.wrong', { email: email })
@@ -507,7 +508,7 @@ module.exports = {
           return res.badRequest({} ,'auth/login');
         }
 
-        sails.log.verbose('AuthController:login:User not found', email);
+        sails.log.info('AuthController:login:User not found or wrong email:', email);
         res.locals.messages = [{
           status: 'danger',
           message: req.__('auth.login.user.not.found', { email: email })
@@ -516,6 +517,7 @@ module.exports = {
       }
 
       if(!user.active) {
+        sails.log.info('AuthController:login:user not active: ', email, user.id);
         res.locals.messages = [{
           status: 'warning',
           message: req.__('auth.login.user.not.active', { email: email })
