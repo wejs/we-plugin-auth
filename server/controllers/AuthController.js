@@ -160,7 +160,7 @@ module.exports = {
       if (sails.config.auth.providerDomain) {
         var redirectSubUrl = req.param('redirectTo');
         if (redirectSubUrl) {
-          res.redirect('/' + redirectSubUrl);
+          return res.redirect('/' + redirectSubUrl);
         }
         return res.redirect('/');
       }
@@ -172,10 +172,10 @@ module.exports = {
 
         var redirectSubUrl = req.param('redirectTo');
         if(redirectSubUrl){
-          res.redirect('/' + redirectSubUrl);
+          return res.redirect('/' + redirectSubUrl);
         }
 
-        res.redirect('/');
+        return res.redirect('/');
       });
 
     })

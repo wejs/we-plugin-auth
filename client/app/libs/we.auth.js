@@ -46,10 +46,14 @@ Ember.auth = Ember.Object.extend({
     });
   },
   authenticate: function authenticate(){
-    location.href = this.get('loginUrl') + '?service=' + this.get('serviceName');
+    var redirectUrl = this.get('loginUrl') + '?service=' + this.get('serviceName');
+    if ( location.pathname.length > 1 ) redirectUrl += '&returnUrl=' + encodeURIComponent(location.pathname.substr(1));
+    location.href = redirectUrl;
   },
   registerUser: function register(){
-    location.href = this.get('register') + '?service=' + this.get('serviceName');
+    var redirectUrl = this.get('register') + '?service=' + this.get('serviceName');
+    if ( location.pathname.length > 1 ) redirectUrl += '&returnUrl=' + encodeURIComponent(location.pathname.substr(1));
+    location.href = redirectUrl;
   },
   refreshToken: function refreshToken(){
 
