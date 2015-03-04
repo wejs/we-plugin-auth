@@ -3,12 +3,17 @@
  */
 
 App.WeAuthModalNeedLoginComponent = Ember.Component.extend({
-  loginUrl: function() {
-    return App.get('auth.loginUrl') + '?service=' + App.get('auth.serviceName');
+  auth: function() {
+    return App.get('auth');
   }.property('App.auth'),
 
-  registerUrl: function() {
-    return App.get('auth.register') + '?service=' + App.get('auth.serviceName');
-  }.property('App.auth')
+  actions: {
+    logRegister: function () {
+      this.get('auth').registerUser();
+    },
 
+    logIn: function () {
+      this.get('auth').authenticate();
+    },  	
+  }
 });
