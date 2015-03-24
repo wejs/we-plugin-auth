@@ -18,23 +18,36 @@ module.exports = {
   current: function (req, res) {
     if (req.isAuthenticated && req.isAuthenticated() ) {
 
-      // TODO change to join after waterline join suport is ready to use
-      // if has a avatar get it after send
-      if(req.user.avatarId  && !req.user.avatar){
-        Images.findOneById(req.user.avatarId).exec(function(err, image) {
-          req.user.avatar = image;
-          respond(req.user);
-        });
-      } else {
-        respond(req.user);
-      }
+      User.findOneById(req.user.id)
+      .populateAll()
+      .exec(function (err, user){
+        if ( err ) {
+          sails.log.error('AuthController::current Error trying to fill currentUser info');
+          return res.serverError(err);
+        }
+        
+        // set req use to use in toJSON
+        user.req = req;     
+
+        respond(user);
+      })
+      // // TODO change to join after waterline join suport is ready to use
+      // // if has a avatar get it after send
+      // if(req.user.avatarId  && !req.user.avatar){
+      //   Images.findOneById(req.user.avatarId).exec(function(err, image) {
+      //     req.user.avatar = image;
+      //     respond(req.user);
+      //   });
+      // } else {
+      //   respond(req.user);
+      // }
     } else {
       respond();
     }
 
     function respond(user){
       if(req.wantsJSON || req.isSocket){
-        return res.send({user: user});
+        return res.ok(user);
       }
 
       if(!user){

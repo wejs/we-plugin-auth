@@ -15,7 +15,11 @@
  */
 
 module.exports.routes = {
-  'get /account': 'AuthController.current',
+  'get /account': {
+    controller    : 'AuthController',
+    action        : 'current',
+    model         : 'user'
+  },
 
   // update authenticated user
   'post /account': {
