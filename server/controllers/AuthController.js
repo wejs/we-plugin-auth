@@ -47,6 +47,7 @@ module.exports = {
 
     function respond(user){
       if(req.wantsJSON || req.isSocket){
+        if ( !user ) return res.send({user: user});
         return res.ok(user);
       }
 
