@@ -1054,14 +1054,20 @@ module.exports = {
         req.flash('messages',[{
           status: 'success',
           type: 'updated',
-          message: req.__('New password set successfully')
+          message: req.__('auth.new-password.success')
         }]);
 
         // Reset req.session.resetPassword to indicate that the operation has been completed
         delete req.session.resetPassword;
 
         if (req.wantsJSON) {
-          return res.send('200',{messages: res.locals.messages});
+          return res.send({
+              messages: [{
+                status: 'success',
+                type: 'updated',
+                message: req.__('auth.new-password.success')
+              }]
+            });
         }
         return res.redirect('/account');
       });
