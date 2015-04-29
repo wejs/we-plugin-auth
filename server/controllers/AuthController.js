@@ -25,9 +25,9 @@ module.exports = {
           sails.log.error('AuthController::current Error trying to fill currentUser info');
           return res.serverError(err);
         }
-        
+
         // set req use to use in toJSON
-        user.req = req;     
+        user.req = req;
 
         respond(user);
       })
@@ -550,7 +550,7 @@ module.exports = {
   },
 
   /**
-   * Login API 
+   * Login API
    *
    * This action receives the static and JSON request
    */
@@ -792,7 +792,7 @@ module.exports = {
           }
 
           sails.log.info('AuthResetPasswordEmail: Email resp:', emailResp);
-          
+
           if (req.wantsJSON) {
             return res.send({
               success: [{
@@ -850,7 +850,7 @@ module.exports = {
         }
         return res.json(token.getResetUrl());
       });
-    });    
+    });
   },
 
   /**
@@ -878,6 +878,10 @@ module.exports = {
 
 
   consumeForgotPasswordToken: function (req, res) {
+    if( req.isAuthenticated() ) {
+      return res.redirect('/account');
+    }
+
     var uid = req.param('uid');
     var token = req.param('token');
     var sails = req._sails;
@@ -901,6 +905,14 @@ module.exports = {
           type: 'updated',
           message: req.__('auth.consumeForgotPasswordToken.token.invalid')
         }]);
+
+        var msg = [{
+          status: 'warning',
+          type: 'updated',
+          message: req.__('auth.consumeForgotPasswordToken.token.invalid')
+        }];
+
+        res.cookie('messages', JSON.stringify(msg));
         return res.redirect('/auth/forgot-password');
       }
 
@@ -917,7 +929,7 @@ module.exports = {
           respondToUser();
         });
       }
-     
+
       function respondToUser() {
         req._sails.auth.logIn(req, res, user, function (err) {
           if (err) {
@@ -1103,7 +1115,7 @@ module.exports = {
     var rNewPassword = req.param('rNewPassword');
     // var userId = req.param('id');
     var userId = req.user.id;
-    
+
     // TODO move this access check to one policy
     // if(!req.isAuthenticated() || req.user.id != userId) {
     if(!req.isAuthenticated()) {
@@ -1239,7 +1251,7 @@ module.exports = {
               slogan: 'MIMI one slogan here',
               url: sails.config.hostname
             }
-          };          
+          };
 
           sails.email.sendEmail(options, 'AuthChangePasswordEmail', templateVariables, function(err , emailResp){
             if (err) {
