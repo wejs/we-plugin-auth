@@ -8,7 +8,7 @@ App.Router.map(function() {
   this.route('authLogin',{path: '/login'});
 });
 
-App.AuthLoginRoute = Ember.Route.extend(App.UnAuthenticatedRouteMixin, {
+App.AuthLoginRoute = Ember.Route.extend(App.ResetScrollMixin,App.UnAuthenticatedRouteMixin, {
   renderTemplate: function (){
     this.render('auth/Login');
   },
@@ -18,13 +18,13 @@ App.AuthLoginRoute = Ember.Route.extend(App.UnAuthenticatedRouteMixin, {
       password: '',
       messages: []
     };
-  }  
+  }
 });
 
 App.AuthNewPasswordRoute = Ember.Route.extend({
   renderTemplate: function() {
     this.render('auth/NewPassword');
-  },    
+  },
   beforeModel: function(transition) {
     var self = this;
     return new Ember.RSVP.Promise(function(resolve) {
@@ -41,17 +41,17 @@ App.AuthNewPasswordRoute = Ember.Route.extend({
   model: function(params) {
     return {
       currentUser: App.currentUser,
-      userId: params['id'],     
+      userId: params['id'],
       requestSend: false
     };
   },
   afterModel: function (model) {
     // user cant update password from others users un server api
-    if (model.currentUser.get('id') != model.userId) this.transitionTo('home');
-  }  
+    if (model.currentUser.get('id') !== model.userId) this.transitionTo('home');
+  }
 });
 
-App.AuthChangePasswordRoute = Ember.Route.extend({
+App.AuthChangePasswordRoute = Ember.Route.extend(App.ResetScrollMixin, {
   renderTemplate: function() {
     this.render('auth/ChangePassword');
   },
@@ -62,7 +62,7 @@ App.AuthChangePasswordRoute = Ember.Route.extend({
   }
 });
 
-App.AuthForgotPasswordRoute = Ember.Route.extend({
+App.AuthForgotPasswordRoute = Ember.Route.extend(App.ResetScrollMixin, {
   renderTemplate: function() {
     this.render('auth/ForgotPassword');
   },
