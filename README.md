@@ -1,22 +1,14 @@
-# We.js Authentication plugin
+# we-plugin-auth
 
-[![Dependency Status](https://david-dm.org/wejs/we-plugin-auth.png)](https://david-dm.org/wejs/we-plugin-auth)
+> We.js authentication plugin, add suport to passport and auth routes
 
-> Login and register in we.js systems!
+# API
 
-## API:
-TODO
-## Sails.js resources:
 
- - Auth Controller
- - AuthToken Model
+## Links
 
-## Avaible URLS:
-TODO
+> * We.js site: http://wejs.org
 
-#### NPM Info:
-[![NPM](https://nodei.co/npm/we-plugin-auth.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/we-plugin-auth/)
+## License
 
-## Copyright and license
-
-Copyright 2013-2014 Alberto Souza <alberto.souza.dev@gmail.com> and contributors , under [the MIT license](LICENSE).
+Under [the MIT license](LICENSE).

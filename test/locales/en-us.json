@@ -1,0 +1,19 @@
+{
+	"user": "user",
+	"response.serveError.title": "response.serveError.title",
+	"we.email.AccontActivationEmail.subject": "we.email.AccontActivationEmail.subject",
+	"auth.register.require.email.activation": "auth.register.require.email.activation",
+	"Home": "Home",
+	"auth.confirmPassword.and.newPassword.diferent": "auth.confirmPassword.and.newPassword.diferent",
+	"auth.email.and.confirmEmail.diferent": "auth.email.and.confirmEmail.diferent",
+	"Validation isEmail failed": "Validation isEmail failed",
+	"auth.register.acceptTerms.required": "auth.register.acceptTerms.required",
+	"auth.login.user.incorrect.password.or.email": "auth.login.user.incorrect.password.or.email",
+	"auth.access.invalid.token": "auth.access.invalid.token",
+	"auth.forgot-password.reset-password": "auth.forgot-password.reset-password",
+	"auth.forgot-password.email.send": "auth.forgot-password.email.send",
+	"auth.change-password.reset-password": "auth.change-password.reset-password",
+	"auth.change-password.success": "auth.change-password.success",
+	"response.forbidden.title": "response.forbidden.title",
+	"auth.reset-password.success.can": "auth.reset-password.success.can"
+}
