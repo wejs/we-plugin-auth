@@ -259,11 +259,9 @@ module.exports = function loadPlugin(projectPath, Plugin) {
     done();
   }
 
-  // set hooks and events
+  // hooks and events
   plugin.hooks.on('we-core:on:set:passport', plugin.onSetPassport);
-
   plugin.hooks.on('we:models:before:instance', plugin.setUserModelMethods);
-
 
   return plugin;
 };
