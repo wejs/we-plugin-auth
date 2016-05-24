@@ -382,7 +382,7 @@ module.exports = {
   /**
    * Api endpoint to check if current user can change the password without old password
    */
-  checkIfCanResetPassword: function (req, res){
+  checkIfCanResetPassword: function checkIfCanResetPassword(req, res) {
     if(!req.isAuthenticated()) return res.forbidden();
 
     if (req.session && req.session.resetPassword) {
@@ -394,7 +394,7 @@ module.exports = {
     return res.forbidden();
   },
 
-  consumeForgotPasswordToken: function (req, res, next){
+  consumeForgotPasswordToken: function consumeForgotPasswordToken(req, res, next) {
     var we = req.we;
 
     var uid = req.params.id;
@@ -444,11 +444,7 @@ module.exports = {
             // set session variable req.session.resetPassword to indicate that there is a new password to be defined
             req.session.resetPassword = true;
 
-            if (req.accepts('json')) {
-              return res.status(200).send();
-            }
-
-            res.goTo( '/auth/' + user.id + '/new-password/');
+            res.goTo( '/auth/' + user.id + '/new-password');
           }).catch(function(err) {
             if (err) we.log.error('auth:consumeForgotPasswordToken: Error on dstroy token:', err);
           });

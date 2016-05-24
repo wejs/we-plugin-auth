@@ -77,6 +77,11 @@ module.exports = function loadPlugin(projectPath, Plugin) {
   });
 
   plugin.setRoutes({
+    'get /account': {
+      'controller': 'auth',
+      'action': 'current',
+      'model': 'user'
+    },
     'get /signup': {
       'controller': 'auth',
       'action': 'signup',

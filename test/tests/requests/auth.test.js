@@ -537,6 +537,8 @@ describe('authFeature', function () {
       .end(function (err, res) {
         if (err) throw err;
 
+        assert.equal(res.header.location, '/auth/forgot-password');
+
         we.config.acl.disabled = oldCfg;
 
         // todo check tags
@@ -562,6 +564,8 @@ describe('authFeature', function () {
         .expect(302)
         .end(function (err, res) {
           if (err) throw err;
+
+          assert.equal(res.header.location, '/auth/'+salvedUser.id+'/new-password');
 
           // then change the password
           authenticatedRequest.post('/auth/'+salvedUser.id+'/new-password')
