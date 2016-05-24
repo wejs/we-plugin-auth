@@ -196,10 +196,6 @@ module.exports = function loadPlugin(projectPath, Plugin) {
 
   plugin.onSetPassport = function onSetPassport(we, done) {
     we.log.verbose('initPassport step');
-
-    we.antiSpam = require('./lib/antiSpam');
-    // load we.js auth logic
-    we.auth = require('./lib');
     // - Passports configs
     wePassport.configureAndSetStrategies(we);
 
@@ -265,6 +261,14 @@ module.exports = function loadPlugin(projectPath, Plugin) {
 
     done();
   }
+
+  plugin.hooks.on('we:before:load:plugin:features', function(we, done){
+    we.antiSpam = require('./lib/antiSpam');
+    // load we.js auth logic
+    we.auth = require('./lib');
+
+    done();
+  });
 
   // hooks and events
   plugin.hooks.on('we-core:on:set:passport', plugin.onSetPassport);
