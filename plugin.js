@@ -222,8 +222,10 @@ module.exports = function loadPlugin(projectPath, Plugin) {
     // admin env middleware
     we.express.get('/admin*', function adminPage(req ,res, next) {
       res.locals.isAdmin = true;
-      res.locals.theme = we.view.adminTheme;
-      res.locals.template = 'home/index';
+      if (we.view) {
+        res.locals.theme = we.view.adminTheme;
+        res.locals.template = 'home/index';
+      }
       return next();
     });
 
