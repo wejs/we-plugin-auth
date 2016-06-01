@@ -212,8 +212,9 @@ module.exports = {
         }
 
         res.locals.newUserCreated = true;
-        // redirect if are a html response
-        if (req.accepts('html')) return res.goTo( (res.locals.redirectTo || '/') );
+        // redirect if are a html response or have the redirectTo
+        if (res.locals.redirectTo) return res.goTo(res.locals.redirectTo);
+        if (req.accepts('html')) return res.goTo('/');
 
         res.send({ user: user});
       });

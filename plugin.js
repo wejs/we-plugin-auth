@@ -63,7 +63,6 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       // flags to enable or disable the login and register
       allowLogin: true,
       allowRegister: true,
-
       requireAccountActivation: true
     },
     apiKeys: {
