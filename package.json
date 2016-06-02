@@ -24,6 +24,7 @@
     "supertest": "^1.0.1",
     "we-core": "wejs/we-core",
     "we-plugin-acl": "wejs/we-plugin-acl",
+    "we-plugin-email": "^1.0.1",
     "we-plugin-form": "wejs/we-plugin-form",
     "we-plugin-user": "wejs/we-plugin-user",
     "we-test-tools": "wejs/we-test-tools"
