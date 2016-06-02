@@ -1,9 +1,7 @@
-module.exports = function uliCommand(program) {
+module.exports = function uliCommand(program, helpers) {
   /**
    * Get one time login link for one user by user id
    */
-
-  var helpers = require('../helpers');
   var we;
 
   program
