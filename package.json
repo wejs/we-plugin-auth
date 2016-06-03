@@ -38,7 +38,7 @@
     "plugin.js",
     "install.js"
   ],
-  "repository": "wejs/we-plugin-auth.git",
+  "repository": "wejs/we-plugin-auth",
   "license": "MIT",
   "author": "Alberto Souza <contato@albertosouza.net>"
 }
