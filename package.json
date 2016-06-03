@@ -31,6 +31,7 @@
     "we-test-tools": "wejs/we-test-tools"
   },
   "files": [
+    "commands",
     "files",
     "lib",
     "locales",
