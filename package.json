@@ -25,14 +25,14 @@
     "supertest": "^1.2.0",
     "we-core": "wejs/we-core",
     "we-plugin-acl": "wejs/we-plugin-acl",
-    "we-plugin-email": "^1.0.1",
+    "we-plugin-email": "wejs/we-plugin-email",
     "we-plugin-form": "wejs/we-plugin-form",
     "we-plugin-user": "wejs/we-plugin-user",
     "we-test-tools": "wejs/we-test-tools"
   },
   "files": [
     "commands",
-    "files",
+    "files/public",
     "lib",
     "locales",
     "server",
@@ -41,5 +41,15 @@
   ],
   "repository": "wejs/we-plugin-auth",
   "license": "MIT",
-  "author": "Alberto Souza <contato@albertosouza.net>"
+  "author": "Alberto Souza <contato@albertosouza.net>",
+  "keywords": [
+    "authentication",
+    "wejs-plugin"
+  ],
+  "wejs": {
+    "dependencies": {
+      "we-plugin-acl": true,
+      "we-plugin-user": true
+    }
+  }
 }

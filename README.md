@@ -4,16 +4,10 @@
 
 We.js authentication plugin, add suport to passport and local strategy auth routes
 
-## Requirements
-
-- we-core
-- we-plugin-user
-- we-plugin-acl
-
 ## Installation:
 
 ```sh
-npm install --save we-plugin-user we-plugin-auth
+we i we-plugin-auth
 ```
 
 ## Routes:
