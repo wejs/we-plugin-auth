@@ -87,27 +87,31 @@ module.exports = {
       if (requireAccountActivation) {
         return we.db.models.authtoken.create({
           userId: newUser.id, redirectUrl: res.locals.redirectTo
-        }).then(function (token) {
-          var templateVariables = {
-            user: newUser,
-            site: {
-              name: we.config.appName
-            },
-            confirmUrl: we.config.hostname + '/user/'+ newUser.id +'/activate/' + token.token
-          };
+        })
+        .then(function (token) {
 
-          var options = {
-            subject: req.__('we.email.AccontActivationEmail.subject', templateVariables),
-            to: newUser.email
-          };
-          // send email in async
-          we.email.sendEmail('AccontActivationEmail',
-            options, templateVariables,
-          function (err) {
-            if (err) {
-              we.log.error('Action:Login sendAccontActivationEmail:', err);
-            }
-          });
+          if (we.plugins['we-plugin-email']) {
+            var templateVariables = {
+              user: newUser,
+              site: {
+                name: we.config.appName
+              },
+              confirmUrl: we.config.hostname + '/user/'+ newUser.id +'/activate/' + token.token
+            };
+
+            var options = {
+              subject: req.__('we.email.AccontActivationEmail.subject', templateVariables),
+              to: newUser.email
+            };
+            // send email in async
+            we.email.sendEmail('AccontActivationEmail',
+              options, templateVariables,
+            function (err) {
+              if (err) {
+                we.log.error('Action:Login sendAccontActivationEmail:', err);
+              }
+            });
+          }
 
           res.addMessage('warning', {
             text: 'auth.register.require.email.activation',
@@ -308,40 +312,43 @@ module.exports = {
       we.db.models.authtoken.create({
         userId: user.id, tokenType: 'resetPassword'
       }).then(function (token) {
-        var options = {
-          email: user.email,
-          subject: we.config.appName + ' - ' + req.__('auth.forgot-password.reset-password'),
-          from: we.config.email.siteEmail
-        };
+        if (we.plugins['we-plugin-email']) {
+          var options = {
+            email: user.email,
+            subject: we.config.appName + ' - ' + req.__('auth.forgot-password.reset-password'),
+            from: we.config.email.siteEmail
+          };
 
-        user = user.toJSON();
+          user = user.toJSON();
 
-        if (!user.displayName) {
-          user.displayName = user.username;
+          if (!user.displayName) {
+            user.displayName = user.username;
+          }
+
+          var templateVariables = {
+            user: {
+              name: user.username,
+              displayName: user.displayName
+            },
+            site: {
+              name: we.config.appName,
+              url: we.config.hostname
+            },
+            resetPasswordUrl: token.getResetUrl()
+          };
+
+          we.email.sendEmail('AuthResetPasswordEmail', options, templateVariables, function(err , emailResp){
+            if (err) {
+              we.log.error('Error on send email AuthResetPasswordEmail', err, emailResp);
+              return res.serverError();
+            }
+            we.log.verbose('AuthResetPasswordEmail: Email resp:', emailResp);
+          });
+
+          res.locals.emailSend = true;
         }
 
-        var templateVariables = {
-          user: {
-            name: user.username,
-            displayName: user.displayName
-          },
-          site: {
-            name: we.config.appName,
-            url: we.config.hostname
-          },
-          resetPasswordUrl: token.getResetUrl()
-        };
-
-        we.email.sendEmail('AuthResetPasswordEmail', options, templateVariables, function(err , emailResp){
-          if (err) {
-            we.log.error('Error on send email AuthResetPasswordEmail', err, emailResp);
-            return res.serverError();
-          }
-          we.log.verbose('AuthResetPasswordEmail: Email resp:', emailResp);
-        });
-
         res.addMessage('success', 'auth.forgot-password.email.send');
-        res.locals.emailSend = true;
         if (req.accepts('json')) return res.ok();
         return res.ok();
       }).catch(res.queryError);
@@ -578,41 +585,44 @@ module.exports = {
           // Reset req.session.resetPassword to indicate that the operation has been completed
           delete req.session.resetPassword;
 
-          var appName = we.config.appName;
+          if (we.plugins['we-plugin-email']) {
+            var appName = we.config.appName;
 
-          var options = {
-            email: user.email,
-            subject: appName + ' - ' + req.__('auth.change-password.reset-password'),
-            from: we.config.email.siteEmail
-          };
+            var options = {
+              email: user.email,
+              subject: appName + ' - ' + req.__('auth.change-password.reset-password'),
+              from: we.config.email.siteEmail
+            };
 
-          user = user.toJSON();
+            user = user.toJSON();
 
-          if (!user.displayName) {
-            user.displayName = user.username;
+            if (!user.displayName) {
+              user.displayName = user.username;
+            }
+
+            var templateVariables = {
+              user: {
+                name: user.username,
+                displayName: user.displayName
+              },
+              site: {
+                name: appName,
+                slogan: we.config.slogan,
+                url: we.config.hostname
+              }
+            };
+
+            we.email.sendEmail('AuthChangePasswordEmail', options, templateVariables, function (err , emailResp) {
+              if (err) {
+                we.log.error('Error on send email AuthChangePasswordEmail', err, emailResp);
+              }
+
+            });
           }
 
-          var templateVariables = {
-            user: {
-              name: user.username,
-              displayName: user.displayName
-            },
-            site: {
-              name: appName,
-              slogan: we.config.slogan,
-              url: we.config.hostname
-            }
-          };
+          res.addMessage('success', 'auth.change-password.success');
 
-          we.email.sendEmail('AuthChangePasswordEmail', options, templateVariables, function (err , emailResp) {
-            if (err) {
-              we.log.error('Error on send email AuthChangePasswordEmail', err, emailResp);
-            }
-
-            res.addMessage('success', 'auth.change-password.success');
-
-            return res.ok();
-          });
+          return res.ok();
         })
       }
     }).catch(res.queryError);
