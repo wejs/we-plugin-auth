@@ -50,8 +50,7 @@ module.exports = function Model(we) {
               userId: uid
             }}
           )
-          .then(function(r){ next(null, r); })
-          .catch(next);
+          .nodeify(next)
         },
 
         /**
@@ -62,24 +61,31 @@ module.exports = function Model(we) {
           we.db.models.authtoken.findOne({ where: {
             token: token,
             userId: userId
-          }}).then(function (authToken) {
+          }})
+          .then(function (authToken) {
             // auth token found then check if is valid
             if (!authToken) {
               // auth token not fount
-              return cb(null, false, null);
-            }
+              return cb (null, false, null)
+            } else if(authToken.userId != userId || !authToken.isValid) {
             // user id how wons the auth token is invalid then return false
-            if(authToken.userId != userId || !authToken.isValid){
-              return cb(null, false,{
+              cb(null, false,{
                 result: 'invalid',
                 message: 'Invalid token'
               });
+            } else  {
+              return authToken.destroy()
+              .then(function () {
+                // authToken is valid
+                cb(null, true, authToken);
+
+                return null;
+              })
             }
-            authToken.destroy().then(function () {
-              // authToken is valid
-              return cb(null, true, authToken);
-            }).catch(cb);
-          }).catch(cb);
+
+            return null;
+          })
+          .catch(cb)
         }
 
       },

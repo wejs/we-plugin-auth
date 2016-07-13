@@ -74,10 +74,14 @@ module.exports = {
               confirmPassword: req.body.confirmPassword
             }, { transaction: t });
           });
-        }).then(function () {
+        })
+        .then(function () {
           we.log.info( 'Auth plugin:New user:', req.body.email , 'username:' , req.body.username , 'ID:' , newUser.id );
           cb();
-        }).catch(function (err) {
+
+          return null;
+        })
+        .catch(function (err) {
           cb(err);
         });
       }
@@ -253,7 +257,8 @@ module.exports = {
       }
 
       // token is valid then get user form db
-      we.db.models.user.findById(user.id).then(function (usr) {
+      we.db.models.user.findById(user.id)
+      .then(function (usr) {
         // user found
         if (!usr) {
           we.log.error('auth:activate: user not found: ', user.id);
@@ -262,10 +267,13 @@ module.exports = {
         }
         // activate user and login
         usr.active = true;
-        usr.save().then(function () {
+
+        return usr.save()
+        .then(function () {
           var rediredtUrl = ( authToken.redirectUrl || '/' );
           // destroy auth token after use
-          authToken.destroy().catch(function (err) {
+          authToken.destroy()
+          .catch(function (err) {
             if (err) we.log.error('Error on delete token', err);
           });
           // login and redirect the user
@@ -277,8 +285,11 @@ module.exports = {
 
             return res.goTo(rediredtUrl);
           });
-        }).catch(res.queryError);
-      }).catch(res.queryError);
+
+          return null
+        })
+      })
+      .catch(res.queryError);
     });
   },
 
@@ -311,7 +322,10 @@ module.exports = {
 
       we.db.models.authtoken.create({
         userId: user.id, tokenType: 'resetPassword'
-      }).then(function (token) {
+      })
+      .nodeify(function (err, token) {
+        if (err) return res.queryError(err)
+
         if (we.plugins['we-plugin-email']) {
           var options = {
             email: user.email,
@@ -337,22 +351,26 @@ module.exports = {
             resetPasswordUrl: token.getResetUrl()
           };
 
-          we.email.sendEmail('AuthResetPasswordEmail', options, templateVariables, function(err , emailResp){
+          we.email.sendEmail('AuthResetPasswordEmail', options, templateVariables, function(err , emailResp) {
             if (err) {
-              we.log.error('Error on send email AuthResetPasswordEmail', err, emailResp);
-              return res.serverError();
+              we.log.error('Error on send email AuthResetPasswordEmail', err, emailResp)
+              return res.serverError()
             }
-            we.log.verbose('AuthResetPasswordEmail: Email resp:', emailResp);
+            we.log.verbose('AuthResetPasswordEmail: Email resp:', emailResp)
           });
 
-          res.locals.emailSend = true;
+          res.locals.emailSend = true
         }
 
-        res.addMessage('success', 'auth.forgot-password.email.send');
-        if (req.accepts('json')) return res.ok();
-        return res.ok();
-      }).catch(res.queryError);
-    }).catch(res.queryError);
+        res.addMessage('success', 'auth.forgot-password.email.send')
+        if (req.accepts('json')) return res.ok()
+        res.ok()
+
+      })
+
+      return null
+    })
+    .catch(res.queryError)
   },
 
   /**
@@ -374,17 +392,20 @@ module.exports = {
     .then(function (user) {
       if (!user) return res.badRequest('unknow error trying to find a user');
 
-      we.db.models.authtoken.create({
+      return we.db.models.authtoken.create({
         'userId': user.id,
         tokenType: 'resetPassword'
-      }).then(function (token) {
+      })
+      .then(function (token) {
         if (!token) {
           return res.serverError('unknow error on create auth token');
         }
 
-        return res.json(token.getResetUrl());
-      });
-    });
+        res.json(token.getResetUrl())
+        return null
+      })
+    })
+    .catch(req.queryError)
   },
 
   /**
@@ -444,29 +465,32 @@ module.exports = {
         we.auth.logIn(req, res, user, function (err) {
           if (err) {
             we.log.error('AuthController:consumeForgotPasswordToken:logIn error', err);
-            return res.serverError(err);
+            return res.serverError(err)
           }
           // consumes the token
-          authToken.isValid = false;
-          authToken.destroy().then(function () {
+          authToken.isValid = false
+          authToken.destroy()
+          .then(function () {
             // set session variable req.session.resetPassword to indicate that there is a new password to be defined
-            req.session.resetPassword = true;
+            req.session.resetPassword = true
 
-            res.goTo( '/auth/' + user.id + '/new-password');
-          }).catch(function(err) {
-            if (err) we.log.error('auth:consumeForgotPasswordToken: Error on dstroy token:', err);
-          });
+            res.goTo( '/auth/' + user.id + '/new-password')
 
-        });
+            return null
+          })
+          .catch(function(err) {
+            if (err) we.log.error('auth:consumeForgotPasswordToken: Error on dstroy token:', err)
+          })
+        })
       }
-    });
+    })
   },
 
   /**
    * newPassword page
    * Page to set new user password after click in new password link
    */
-  newPassword: function newPasswordAction(req, res) {
+  newPassword: function newPasswordAction (req, res) {
     // not authenticated
     if (!req.isAuthenticated()) return res.goTo('/auth/forgot-password');
 
@@ -519,7 +543,10 @@ module.exports = {
 
         return res.ok();
       });
-    }).catch(res.queryError);
+
+      return null
+    })
+    .catch(res.queryError);
   },
 
   /**
@@ -554,7 +581,9 @@ module.exports = {
     }
 
     we.db.models.user.findById(userId)
-    .then(function (user) {
+    .nodeify(function (err, user) {
+      if (err) return res.queryError(err);
+
       if (!user) {
         we.log.info('resetPassword: User not found', user);
         return res.badRequest();
@@ -625,7 +654,7 @@ module.exports = {
           return res.ok();
         })
       }
-    }).catch(res.queryError);
+    })
   }
 };
 
@@ -638,21 +667,26 @@ module.exports = {
 function loadUserAndAuthToken(we, uid, token, callback){
   we.db.models.user.findById(uid)
   .then(function (user) {
+
     if (!user) {
       // user not found
       return callback(null, null, null);
     }
 
-    we.db.models.authtoken.find({ where: {
+    return we.db.models.authtoken.find({ where: {
       userId: user.id,
       token: token,
       isValid: true
-    }}).then(function(authToken){
+    }})
+    .then(function (authToken) {
       if (authToken) {
-        return callback(null, user, authToken);
-      }else{
-        return callback(null, user, null);
+        callback(null, user, authToken);
+      } else {
+        callback(null, user, null);
       }
+
+      return null;
     });
-  });
+  })
+  .catch(callback)
 }

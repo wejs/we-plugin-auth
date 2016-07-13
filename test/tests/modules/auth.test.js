@@ -77,7 +77,8 @@ describe('moduleAuth', function () {
     it('auth.util.expireToken should set token.isValid to false', function (done) {
       we.db.models.accesstoken.create({
         userId: 1
-      }).then(function (t){
+      })
+      .then(function (t){
         assert(t);
         assert.equal(true, t.isValid);
         auth.util.expireToken(t.token, we, function(err, tokenR) {
@@ -88,8 +89,13 @@ describe('moduleAuth', function () {
             assert(ts);
             assert.equal(false, ts.isValid);
             done();
-          }).catch(done);
+
+            return null;
+          })
+          .catch(done);
         });
+
+        return null;
       }).catch(done);
     });
   });

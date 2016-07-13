@@ -449,6 +449,8 @@ describe('authFeature', function () {
               assert.equal(true, user.active);
               // todo add a static login form
               done();
+
+              return null;
             })
 
           });
@@ -698,7 +700,8 @@ describe('authFeature', function () {
       we.db.models.authtoken.create({
         userId: salvedUser.id,
         tokenType: 'resetPassword'
-      }).then(function (authToken) {
+      })
+      .then(function (authToken) {
         localAgent.get('/auth/'+ salvedUser.id +'/reset-password/' + authToken.token)
         .expect(302)
         .end(function (err) {
@@ -722,7 +725,7 @@ describe('authFeature', function () {
           }, 100);
 
         });
-
+        return null;
       })
 
     });

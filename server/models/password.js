@@ -89,32 +89,31 @@ module.exports = function Model(we) {
 
       instanceMethods: {
         validatePassword: function (password, next) {
-          bcrypt.compare(password, this.password, next);
+          bcrypt.compare(password, this.password, next)
         },
         toJSON: function() {
-          var obj = this.get();
-          return obj;
+          var obj = this.get()
+          return obj
         }
       },
       hooks: {
         // Lifecycle Callbacks
         beforeCreate: function(record, options, next) {
           this.generatePassword(record.password, function(err, hash) {
-            if (err) return next(err);
-            record.password = hash;
+            if (err) return next(err)
+            record.password = hash
             // remove old user paswords
             we.db.models.password.destroy({
               where: { userId: record.userId }
-            }).then(function(){
-              return next(null, record);
-            });
+            })
+            .nodeify(next)
           });
         },
         beforeUpdate: function(record, options, next) {
           this.generatePassword(record.password, function(err, hash) {
-            if (err) return next(err);
-            record.password = hash;
-            return next(null, record);
+            if (err) return next(err)
+            record.password = hash
+            return next(null, record)
           });
         },
       }

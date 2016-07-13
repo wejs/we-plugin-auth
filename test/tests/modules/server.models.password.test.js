@@ -19,17 +19,22 @@ describe('serverModelsPassport', function () {
       userId: 1,
       password: pass,
       confirmPassword: pass,
-    }).then(function(p){
+    })
+    .then(function(p){
       assert.notEqual(pass, p.password);
       assert(p.active);
 
-      password.findById(p.id).then(function(p){
+      password.findById(p.id)
+      .then(function(p){
 
         assert.notEqual(pass, p.password);
         assert(p.active);
         assert(!p.confirmPassword);
         done();
+
+        return null;
       }).catch(done);
+      return null;
     }).catch(done);
   });
 
@@ -56,7 +61,8 @@ describe('serverModelsPassport', function () {
       userId: 1,
       password: pass,
       confirmPassword: pass,
-    }).then(function(p){
+    })
+    .then(function(p){
       assert.notEqual(pass, p.password);
 
       p.validatePassword('otherpassword', function(err, isOk){
@@ -64,7 +70,9 @@ describe('serverModelsPassport', function () {
         assert(!isOk);
         done();
       })
-    }).catch(done);
+      return null;
+    })
+    .catch(done);
   });
 
   it('password.update should change the passowrd, validate with new pass and not with old pass', function (done) {
@@ -74,7 +82,8 @@ describe('serverModelsPassport', function () {
       userId: 1,
       password: oldPass,
       confirmPassword: oldPass,
-    }).then(function(p){
+    })
+    .then(function(p){
       assert.notEqual(oldPass, p.password);
       async.series([
         function update(done) {
@@ -98,6 +107,8 @@ describe('serverModelsPassport', function () {
           });
         }
       ], done);
+
+      return null;
     }).catch(done);
   });
 });

@@ -49,15 +49,14 @@ module.exports = function Model(we) {
          * @param  {string}   uid  user id to invalid all tokens
          * @param  {Function} next callback
          */
-        invalidOldUserTokens: function(uid, next) {
+        invalidOldUserTokens: function (uid, next) {
           we.db.models.authtoken.update(
             { isValid : false },
             { where: {
               userId: uid
             }}
           )
-          .then(function (r){ next(null, r) })
-          .catch(next);
+          .nodeify(next)
         },
 
         /**
@@ -67,7 +66,9 @@ module.exports = function Model(we) {
           // then get user token form db
           we.db.models.accesstoken.find({ where: {
             token: token
-          }}).then(function (accessToken) {
+          }})
+          .nodeify(function (err, accessToken) {
+            if (err) return cb(err)
             // access token found then check if is valid
             if (accessToken) {
               // user id how wons the access token is invalid then return false
@@ -79,15 +80,17 @@ module.exports = function Model(we) {
               }
               // set this access token as used
               accessToken.isValid = false;
-              accessToken.save().then(function() {
+              accessToken.save()
+              .then(function() {
                 // accessToken is valid
                 return cb(null, true, accessToken);
-              }).catch(cb);
+              })
+              .catch(cb);
             } else {
               // Access token not found
               return cb('Access token not found', false, null);
             }
-          });
+          })
         }
       },
 

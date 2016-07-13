@@ -36,12 +36,14 @@ module.exports = function loadPlugin(projectPath, Plugin) {
             var query = { where: {} };
             query.where[we.config.passport.strategies.local.usernameField] = email;
             // find user in DB
-            we.db.models.user.find(query).then (function (user) {
+            we.db.models.user.find(query)
+            .then (function (user) {
               if (!user) {
                 return done(null, false, { message: 'auth.login.wrong.email.or.password' });
               }
               // get the user password
-              user.getPassword().then(function (passwordObj) {
+              return user.getPassword()
+              .then(function (passwordObj) {
                 if (!passwordObj)
                   return done(null, false, { message: 'auth.login.user.dont.have.password' });
 
@@ -52,9 +54,12 @@ module.exports = function loadPlugin(projectPath, Plugin) {
                   } else {
                     return done(null, user);
                   }
-                });
+                })
+
+                return null;
               })
-            });
+            })
+            .catch(done)
           }
         }
       }
@@ -235,27 +240,39 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       });
     };
     we.db.modelsConfigs.user.options.instanceMethods.verifyPassword = function verifyPassword (password, cb){
-      return this.getPassword().then( function(passwordObj){
-        if (!passwordObj) return cb(null, false);
-        passwordObj.validatePassword(password, cb);
-      });
+      return this.getPassword()
+      .nodeify( function(err, passwordObj) {
+        if (err) return cb(err)
+
+        if (!passwordObj) return cb(null, false)
+        passwordObj.validatePassword(password, cb)
+      })
     };
     we.db.modelsConfigs.user.options.instanceMethods.updatePassword = function updatePassword (newPassword, cb){
       var user = this;
-      return this.getPassword().then( function (password){
+      return this.getPassword()
+      .nodeify( function (err, password) {
+        if (err) return cb(err);
+
         if (!password) {
           // create one password if this user dont have one
-          return we.db.models.password.create({
+          we.db.models.password.create({
             userId: user.id,
             password: newPassword
-          }).then(function (password) {
-            return cb(null, password);
+          })
+          .then(function (password) {
+            cb(null, password)
+            return null
           })
         }
         // update
         password.password = newPassword;
-        password.save().then(function(r){ cb(null, r) });
-      });
+        password.save()
+        .then(function (r) {
+          cb(null, r)
+          return null
+        })
+      })
     }
 
     done();
