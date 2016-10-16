@@ -261,17 +261,20 @@ module.exports = function loadPlugin(projectPath, Plugin) {
             password: newPassword
           })
           .then(function (password) {
-            cb(null, password)
-            return null
+            cb(null, password);
+            return null;
           })
+        } else {
+          // update
+          password.password = newPassword;
+          password.save()
+          .then(function (r) {
+            cb(null, r)
+            return null
+          });
         }
-        // update
-        password.password = newPassword;
-        password.save()
-        .then(function (r) {
-          cb(null, r)
-          return null
-        })
+
+        return null;
       })
     }
 
