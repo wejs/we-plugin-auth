@@ -532,7 +532,9 @@ module.exports = {
       user.updatePassword(newPassword, function (err) {
         if (err) return res.serverError(err);
         // Reset req.session.resetPassword to indicate that the operation has been completed
-        delete req.session.resetPassword;
+        if (req.session) {
+          delete req.session.resetPassword;
+        }
 
         if (req.accepts('json')) {
           return res.status(200).send({messages: res.locals.messages});
