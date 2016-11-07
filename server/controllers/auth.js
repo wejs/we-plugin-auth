@@ -496,14 +496,14 @@ module.exports = {
 
     // check access
     if (
-      req.session.resetPassword &&
+      (req.session && req.session.resetPassword) &&
       (req.params.id != req.user.id)
     ) {
       req.we.log.warn('auth.newPassword cant change other user password: '+req.params.id+ ' auid: '+req.user.id);
       return res.goTo('/auth/'+req.user.id+'/new-password');
     } else if (req.we.acl.canStatic('manage_users', req.userRoleNames)) {
       // can manage users then can change others users password
-    } else if (!req.session.resetPassword){
+    } else if (!req.session || !req.session.resetPassword) {
       req.we.log.warn('auth.newPassword req.session.resetPassword is false, uid: '+req.params.id+' auid: '+req.user.id);
       return res.goTo('/auth/forgot-password');
     }
