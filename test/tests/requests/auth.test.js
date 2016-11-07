@@ -281,9 +281,12 @@ describe('authFeature', function () {
         .post('/signup')
         .set('Accept', 'application/json')
         .send(userStub)
-        .expect(400)
+        .expect(500)
         .end(function (err, res) {
-          if (err) throw new Error(err, res.body);
+          if (err) {
+            console.log('res.text>',res.text);
+            throw err;
+          }
 
           assert(res.body.messages);
 
