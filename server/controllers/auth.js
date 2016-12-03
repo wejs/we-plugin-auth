@@ -554,7 +554,7 @@ module.exports = {
   /**
    * Change authenticated user password
    */
-  changePassword: function (req, res) {
+  changePassword: function changePassword(req, res) {
     if(!req.isAuthenticated()) return res.goTo('/');
     var we = req.we;
 
@@ -569,7 +569,7 @@ module.exports = {
       return res.badRequest('auth.change-password.forbiden');
 
     // skip old password if have resetPassword flag in session
-    if (!req.session.resetPassword) {
+    if (we.config.session && req.session && !req.session.resetPassword) {
       if (!oldPassword)
         return res.badRequest('field.password.required');
     }
@@ -592,7 +592,7 @@ module.exports = {
       }
 
       // skip password check if have resetPassord flag active
-      if (req.session.resetPassword) {
+      if (we.config.session && req.session && req.session.resetPassword) {
         return changePassword();
       } else {
         user.verifyPassword(oldPassword, function(err, passwordOk) {
@@ -612,9 +612,10 @@ module.exports = {
             we.log.error('Error on save user to update password: ', err);
             return res.serverError(err);
           }
-
-          // Reset req.session.resetPassword to indicate that the operation has been completed
-          delete req.session.resetPassword;
+          if (we.config.session && req.session) {
+            // Reset req.session.resetPassword to indicate that the operation has been completed
+            delete req.session.resetPassword;
+          }
 
           if (we.plugins['we-plugin-email']) {
             var appName = we.config.appName;
