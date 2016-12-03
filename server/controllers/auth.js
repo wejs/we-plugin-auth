@@ -597,8 +597,7 @@ module.exports = {
       } else {
         user.verifyPassword(oldPassword, function(err, passwordOk) {
           if (!passwordOk) {
-            res.addMessage('error', 'field.password.invalid');
-            return res.badRequest();
+            return res.badRequest('field.password.invalid');
           }
 
           return changePassword();
