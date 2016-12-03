@@ -56,7 +56,7 @@
   "auth.login.authenticated.msg": "Você está autenticado, <a href='/auth/logout'>clique aqui para sair do sistema</a>.",
   "passport.strategy.local": "Se autenticar usando o email e senha criados no sistema",
   "auth.login.wrong.email.or.password": "Seu email ou senhas estão incorretos ou você não está registrado no sistema",
-  "field.password.invalid": "Seu senha está errada",
+  "field.password.invalid": "Sua senha está errada",
   "auth.login.user.not.active": "Você precisa validar a sua conta de usuário antes de entrar no sistema",
   "auth.newPassword.and.password.diferent": "Os campos senha e repetir senha estão diferentes."
 }
