@@ -6,3 +6,4 @@ files/uploads
 .travis.yml
 .gitignore
 *.log
+config

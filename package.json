@@ -20,7 +20,6 @@
     "istanbul": "^0.4.5",
     "mocha": "^3.1.2",
     "mysql": "^2.12.0",
-    "rimraf": "^2.5.4",
     "sinon": "^1.17.6",
     "supertest": "^2.0.1",
     "we-core": "wejs/we-core",
