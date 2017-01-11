@@ -3,10 +3,26 @@
  *
  * see http://wejs.org/docs/we/plugin
  */
-var wePassport = require('./lib/passport');
+const wePassport = require('./lib/passport');
 
 module.exports = function loadPlugin(projectPath, Plugin) {
-  var plugin = new Plugin(__dirname);
+  const plugin = new Plugin(__dirname);
+
+  plugin.fastLoader = function fastLoader(we, done) {
+    // controllers:
+    we.controllers.auth = new we.class.Controller(
+      require('./server/controllers/auth.js')
+    );
+
+    // - Models
+
+    we.db.modelsConfigs.accesstoken = require('./server/models/accesstoken.js')(we);
+    we.db.modelsConfigs.authtoken = require('./server/models/authtoken.js')(we);
+    we.db.modelsConfigs.passport = require('./server/models/passport.js')(we);
+    we.db.modelsConfigs.password = require('./server/models/password.js')(we);
+
+    done();
+  };
 
   plugin.setConfigs({
     passport: {

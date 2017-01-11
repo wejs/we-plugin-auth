@@ -5,11 +5,11 @@
  * @description :: Auth Token model for create login, password and activate account tokens
  *
  */
-var crypto = require('crypto');
+const crypto = require('crypto');
 
 module.exports = function Model(we) {
   // set sequelize model define and options
-  var model = {
+  const model = {
     definition: {
 
       userId: {
@@ -43,8 +43,9 @@ module.exports = function Model(we) {
          * @param  {string}   uid  user id to invalid all tokens
          * @param  {Function} next callback
          */
-        invalidOldUserTokens: function(uid, next) {
-          we.db.models.authtoken.update(
+        invalidOldUserTokens(uid, next) {
+          we.db.models.authtoken
+          .update(
             { isValid : false },
             { where: {
               userId: uid
@@ -56,9 +57,10 @@ module.exports = function Model(we) {
         /**
         * Check if a auth token is valid
         */
-        validAuthToken: function (userId, token, cb) {
+        validAuthToken(userId, token, cb) {
           // then get user token form db
-          we.db.models.authtoken.findOne({ where: {
+          we.db.models.authtoken
+          .findOne({ where: {
             token: token,
             userId: userId
           }})
@@ -74,7 +76,8 @@ module.exports = function Model(we) {
                 message: 'Invalid token'
               });
             } else  {
-              return authToken.destroy()
+              return authToken
+              .destroy()
               .then(function () {
                 // authToken is valid
                 cb(null, true, authToken);
@@ -91,19 +94,19 @@ module.exports = function Model(we) {
       },
 
       instanceMethods: {
-        getResetUrl: function() {
+        getResetUrl() {
           return we.config.hostname + '/auth/'+ this.userId +'/reset-password/' + this.token;
         },
-        toJSON: function() {
-          var obj = this.get();
+        toJSON() {
+          const obj = this.get();
           return obj;
         }
       },
       hooks: {
-        beforeCreate: function(token, options, next) {
+        beforeCreate(token, options, next) {
           if (token.userId) {
             // before invalid all user old tokens
-            we.db.models.authtoken.invalidOldUserTokens(token.userId, function(){
+            we.db.models.authtoken.invalidOldUserTokens(token.userId, function() {
               // generete new token
               token.token = crypto.randomBytes(25).toString('hex');
               next(null, token);

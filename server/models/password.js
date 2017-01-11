@@ -5,29 +5,28 @@
  * @description :: Model used to store user passwords
  *
  */
-var bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs');
 
-var newPasswordValidation = {
-  notEmptyOnCreate: function(val) {
+const newPasswordValidation = {
+  notEmptyOnCreate(val) {
     if (this.isNewRecord) {
       if (!val) {
         throw new Error('auth.register.confirmPassword.required');
       }
     }
   },
-  equalPasswordFields: function(val) {
+  equalPasswordFields(val) {
     if (this.isNewRecord) {
       if (this.getDataValue('password') != val) {
         throw new Error('auth.confirmPassword.and.newPassword.diferent');
       }
     }
-
   }
 };
 
 module.exports = function Model(we) {
   // set sequelize model define and options
-  var model = {
+  const model = {
     definition: {
       userId : { type: we.db.Sequelize.BIGINT },
       active : { type: we.db.Sequelize.BOOLEAN, defaultValue: true },
@@ -38,7 +37,7 @@ module.exports = function Model(we) {
       },
       confirmPassword: {
         type: we.db.Sequelize.VIRTUAL,
-        set: function set(val) {
+        set(val) {
           this.setDataValue('confirmPassword', val);
         },
         validate: newPasswordValidation
@@ -57,7 +56,7 @@ module.exports = function Model(we) {
          * @param  {string}   password
          * @param  {Function} next     callback
          */
-        generatePassword: function(password, next) {
+        generatePassword(password, next) {
           var SALT_WORK_FACTOR = this.options.SALT_WORK_FACTOR;
 
           return bcrypt.genSalt(SALT_WORK_FACTOR, function(err, salt) {
@@ -73,7 +72,7 @@ module.exports = function Model(we) {
          * @param  {Function} cb       Optional callback
          * @return {boolean}           return true or false if no callback is passed
          */
-        verifyPassword: function (password, hash, cb) {
+        verifyPassword(password, hash, cb) {
           // if user dont have a password
           if (!hash) {
             if(!cb) return false;
@@ -88,32 +87,32 @@ module.exports = function Model(we) {
       },
 
       instanceMethods: {
-        validatePassword: function (password, next) {
-          bcrypt.compare(password, this.password, next)
+        validatePassword(password, next) {
+          bcrypt.compare(password, this.password, next);
         },
-        toJSON: function() {
-          var obj = this.get()
-          return obj
+        toJSON() {
+          const obj = this.get();
+          return obj;
         }
       },
       hooks: {
         // Lifecycle Callbacks
-        beforeCreate: function(record, options, next) {
+        beforeCreate(record, options, next) {
           this.generatePassword(record.password, function(err, hash) {
-            if (err) return next(err)
-            record.password = hash
+            if (err) return next(err);
+            record.password = hash;
             // remove old user paswords
             we.db.models.password.destroy({
               where: { userId: record.userId }
             })
-            .nodeify(next)
+            .nodeify(next);
           });
         },
-        beforeUpdate: function(record, options, next) {
+        beforeUpdate(record, options, next) {
           this.generatePassword(record.password, function(err, hash) {
-            if (err) return next(err)
-            record.password = hash
-            return next(null, record)
+            if (err) return next(err);
+            record.password = hash;
+            return next(null, record);
           });
         },
       }

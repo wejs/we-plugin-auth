@@ -5,13 +5,12 @@
  * @description :: Token model for bearer token access
  *
  */
-var crypto = require('crypto');
+const crypto = require('crypto');
 
 module.exports = function Model(we) {
   // set sequelize model define and options
-  var model = {
+  const model = {
     definition: {
-
       userId: {
         type: we.db.Sequelize.BIGINT,
         allowNull: false
@@ -49,8 +48,9 @@ module.exports = function Model(we) {
          * @param  {string}   uid  user id to invalid all tokens
          * @param  {Function} next callback
          */
-        invalidOldUserTokens: function (uid, next) {
-          we.db.models.authtoken.update(
+        invalidOldUserTokens(uid, next) {
+          we.db.models.authtoken
+          .update(
             { isValid : false },
             { where: {
               userId: uid
@@ -62,7 +62,7 @@ module.exports = function Model(we) {
         /**
         * Check if a access token is valid
         */
-        validAccessToken: function (userId, token, cb) {
+        validAccessToken(userId, token, cb) {
           // then get user token form db
           we.db.models.accesstoken.find({ where: {
             token: token
@@ -80,10 +80,12 @@ module.exports = function Model(we) {
               }
               // set this access token as used
               accessToken.isValid = false;
-              accessToken.save()
-              .then(function() {
+              accessToken
+              .save()
+              .then( ()=> {
                 // accessToken is valid
-                return cb(null, true, accessToken);
+                cb(null, true, accessToken);
+                return null;
               })
               .catch(cb);
             } else {
@@ -95,18 +97,18 @@ module.exports = function Model(we) {
       },
 
       instanceMethods: {
-        toJSON: function() {
+        toJSON() {
           if (!this.get) {
-            console.trace()
+            console.trace();
           }
 
-          var obj = this.get();
+          const obj = this.get();
           delete obj.updatedAt;
           return obj;
         }
       },
       hooks: {
-        beforeValidate: function(token, options, next) {
+        beforeValidate(token, options, next) {
           if (!token.token) {
             // generate the token string
             token.token = crypto.randomBytes(25).toString('hex');
