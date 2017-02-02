@@ -8,6 +8,13 @@ const wePassport = require('./lib/passport');
 module.exports = function loadPlugin(projectPath, Plugin) {
   const plugin = new Plugin(__dirname);
 
+  /**
+   * We.js fast loader function
+   * Disables auto load for this plugin
+   *
+   * @param  {Object}   we   We.js app
+   * @param  {Function} done callback
+   */
   plugin.fastLoader = function fastLoader(we, done) {
     // controllers:
     we.controllers.auth = new we.class.Controller(

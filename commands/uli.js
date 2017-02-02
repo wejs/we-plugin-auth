@@ -2,7 +2,7 @@ module.exports = function uliCommand(program, helpers) {
   /**
    * Get one time login link for one user by user id
    */
-  var we;
+  let we;
 
   program
   .command('uli [id]')
@@ -10,25 +10,30 @@ module.exports = function uliCommand(program, helpers) {
   .action(function run() {
     we = helpers.getWe();
 
-    we.bootstrap(function(err, we) {
+    we.bootstrap( (err, we)=> {
       if (err) return doneAll(err);
 
-      var uid = process.argv[3];
+      const uid = process.argv[3];
       if (! Number(uid) ) return doneAll('Invalid Uid');
 
       we.db.models.user.findById(uid)
-      .then( function (user) {
-        we.db.models.authtoken.create({
+      .then( (user)=> {
+        we.db.models.authtoken
+        .create({
           'userId': user.id,
           tokenType: 'resetPassword'
-        }).then(function (token) {
+        })
+        .then( (token)=> {
           if (!token) {
-            return doneAll('unknow error on create auth token');
+            doneAll('unknow error on create auth token');
+          } else {
+            we.log.info('resetUrl>>', token.getResetUrl());
+            doneAll();
           }
-
-          we.log.info('resetUrl>>', token.getResetUrl());
-          return doneAll();
+          return null;
         });
+
+        return null;
       });
     });
 
@@ -38,6 +43,7 @@ module.exports = function uliCommand(program, helpers) {
       }
       // end / exit
       process.exit();
+      return null;
     }
   });
 }

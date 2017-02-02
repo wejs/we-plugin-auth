@@ -5,15 +5,15 @@
 module.exports = {
   _config: { acl: false },
   // getter for current logged in user
-  current: function current(req, res) {
+  current(req, res) {
     if (!req.isAuthenticated() ) return res.send({});
     return res.ok(req.user);
   },
   /**
    * Signup action for POST and GET methods
    */
-  signup: function Register(req, res) {
-    var we = req.we;
+  signup(req, res) {
+    const we = req.we;
     // check allowRegister flag how block signup
     if (!we.config.auth.allowRegister) return res.forbidden();
     // anti spam honeypot field
@@ -26,13 +26,13 @@ module.exports = {
       return res.ok();
     }
 
-    var newUser, requireAccountActivation;
+    let newUser, requireAccountActivation;
     // --  set req.body for handle db errors
     res.locals.data = req.body;
 
     we.utils.async.series([
       function checkIfIsSpam(cb) {
-        we.antiSpam.recaptcha.verify(req, res, function (err, isSpam) {
+        we.antiSpam.recaptcha.verify(req, res, (err, isSpam)=> {
           if (err) return cb(err);
           if (isSpam) {
             we.log.warn('auth.signup: spambot found in recaptcha verify: ', req.ip, req.body.email);
@@ -61,11 +61,12 @@ module.exports = {
       },
       // save the user and password with transaction
       function saveUserAndPassword(cb) {
-        we.db.defaultConnection.transaction(function (t) {
+        we.db.defaultConnection.transaction( (t)=> {
           // create the user
           return we.db.models.user.create(
             req.body, { transaction: t }
-          ).then(function (u) {
+          )
+          .then( (u)=> {
             newUser = u;
             // save password
             return we.db.models.password.create({
@@ -75,27 +76,29 @@ module.exports = {
             }, { transaction: t });
           });
         })
-        .then(function () {
+        .then( ()=> {
           we.log.info( 'Auth plugin:New user:', req.body.email , 'username:' , req.body.username , 'ID:' , newUser.id );
           cb();
 
           return null;
         })
-        .catch(function (err) {
+        .catch( (err)=> {
           cb(err);
+          return null;
         });
       }
     ], function afterCreateUserAndPassword(err) {
       if(err) return res.queryError(err);
 
       if (requireAccountActivation) {
-        return we.db.models.authtoken.create({
+        return we.db.models.authtoken
+        .create({
           userId: newUser.id, redirectUrl: res.locals.redirectTo
         })
-        .then(function (token) {
+        .then( (token)=> {
 
           if (we.plugins['we-plugin-email']) {
-            var templateVariables = {
+            const templateVariables = {
               user: newUser,
               site: {
                 name: we.config.appName
@@ -103,14 +106,14 @@ module.exports = {
               confirmUrl: we.config.hostname + '/user/'+ newUser.id +'/activate/' + token.token
             };
 
-            var options = {
+            const options = {
               subject: req.__('we.email.AccontActivationEmail.subject', templateVariables),
               to: newUser.email
             };
             // send email in async
             we.email.sendEmail('AccontActivationEmail',
               options, templateVariables,
-            function (err) {
+            (err)=> {
               if (err) {
                 we.log.error('Action:Login sendAccontActivationEmail:', err);
               }
@@ -134,7 +137,7 @@ module.exports = {
         });
       }
 
-      we.auth.logIn(req, res, newUser, function (err) {
+      we.auth.logIn(req, res, newUser, (err)=> {
         if (err) {
           we.log.error('logIn error: ', err);
           return res.serverError(err);
@@ -156,10 +159,10 @@ module.exports = {
    * Log out current user
    * Beware! this dont run socket.io disconect
    */
-  logout: function logout(req, res) {
-    var we = req.we;
+  logout(req, res) {
+    const we = req.we;
 
-    we.auth.logOut(req, res, function (err) {
+    we.auth.logOut(req, res, (err)=> {
       if (err)
       we.log.error('Error on logout user', req.id, req.cookie);
       res.goTo('/');
@@ -170,8 +173,8 @@ module.exports = {
    *
    * This action receives the static and JSON request
    */
-  login: function login(req, res, next) {
-    var we = req.we;
+  login(req, res, next) {
+    const we = req.we;
 
     if (!we.config.passport || !we.config.passport.strategies || !we.config.passport.strategies.local) {
       return res.notFound();

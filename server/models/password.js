@@ -1,13 +1,20 @@
 /**
- * passwrod model
+ * Password model
  *
  * @module      :: Model
  * @description :: Model used to store user passwords
- *
  */
-const bcrypt = require('bcryptjs');
+
+const path = require('path'),
+  // load one of the bcript libs, install C version of the bcript lib in project
+  bcrypt = getBcryptLib();
 
 const newPasswordValidation = {
+  /**
+   * Password can not be empty on create
+   *
+   * @param  {String} val
+   */
   notEmptyOnCreate(val) {
     if (this.isNewRecord) {
       if (!val) {
@@ -15,6 +22,11 @@ const newPasswordValidation = {
       }
     }
   },
+  /**
+   * Check if confirm and newPassword are equal:
+   *
+   * @param  {String} val
+   */
   equalPasswordFields(val) {
     if (this.isNewRecord) {
       if (this.getDataValue('password') != val) {
@@ -25,7 +37,7 @@ const newPasswordValidation = {
 };
 
 module.exports = function Model(we) {
-  // set sequelize model define and options
+  // Password model:
   const model = {
     definition: {
       userId : { type: we.db.Sequelize.BIGINT },
@@ -57,7 +69,7 @@ module.exports = function Model(we) {
          * @param  {Function} next     callback
          */
         generatePassword(password, next) {
-          var SALT_WORK_FACTOR = this.options.SALT_WORK_FACTOR;
+          const SALT_WORK_FACTOR = this.options.SALT_WORK_FACTOR;
 
           return bcrypt.genSalt(SALT_WORK_FACTOR, function(err, salt) {
             return bcrypt.hash(password, salt, next);
@@ -87,6 +99,12 @@ module.exports = function Model(we) {
       },
 
       instanceMethods: {
+        /**
+         * Verify one password:
+         *
+         * @param  {string}   password string to verify
+         * @param  {Function} next     callback
+         */
         validatePassword(password, next) {
           bcrypt.compare(password, this.password, next);
         },
@@ -96,23 +114,44 @@ module.exports = function Model(we) {
         }
       },
       hooks: {
-        // Lifecycle Callbacks
+        // - Lifecycle Callbacks
+
+        /**
+         * Before create one record
+         *
+         * @param  {Object}   record  record data
+         * @param  {Object}   options sequelize options
+         * @param  {Function} next    callback
+         */
         beforeCreate(record, options, next) {
-          this.generatePassword(record.password, function(err, hash) {
+          this.generatePassword(record.password, (err, hash)=> {
             if (err) return next(err);
             record.password = hash;
-            // remove old user paswords
-            we.db.models.password.destroy({
+            // remove old user paswords on create an new one:
+            we.db.models.password
+            .destroy({
               where: { userId: record.userId }
             })
-            .nodeify(next);
+            .nodeify( (err, result)=> {
+              next(err, result);
+              return null;
+            });
           });
         },
+        /**
+         * Before update record
+         *
+         * @param  {Object}   record  sequelize record to be updated
+         * @param  {Object}   options sequeslize options
+         * @param  {Function} next    callback
+         */
         beforeUpdate(record, options, next) {
-          this.generatePassword(record.password, function(err, hash) {
+          // generate an new hash on every update of the password record:
+          this.generatePassword(record.password, (err, hash)=> {
             if (err) return next(err);
             record.password = hash;
-            return next(null, record);
+            next(null, record);
+            return null;
           });
         },
       }
@@ -120,4 +159,20 @@ module.exports = function Model(we) {
   }
 
   return model;
+}
+
+/**
+ * Get bcrypt lib
+ *
+ * Method to get C version of bcrypt or fallback to slower JS version
+ *
+ * @return {Object} Bcrypt lib
+ */
+function getBcryptLib() {
+  try {
+    // try to load bcrypt from project:
+    return require( path.join(process.pwd(), 'node_modules', 'bcrypt') );
+  } catch(e) {
+    return require('bcryptjs');
+  }
 }
