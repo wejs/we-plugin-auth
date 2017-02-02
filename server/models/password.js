@@ -168,7 +168,7 @@ module.exports = function Model(we) {
 function getBcryptLib() {
   try {
     // try to load bcrypt from project:
-    return require( path.join(process.pwd(), 'node_modules', 'bcrypt') );
+    return require( path.join(process.cwd(), 'node_modules', 'bcrypt') );
   } catch(e) {
     return require('bcryptjs');
   }
