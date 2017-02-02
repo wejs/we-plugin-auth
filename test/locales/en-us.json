@@ -15,5 +15,6 @@
 	"auth.change-password.reset-password": "auth.change-password.reset-password",
 	"auth.change-password.success": "auth.change-password.success",
 	"response.forbidden.title": "response.forbidden.title",
-	"auth.reset-password.success.can": "auth.reset-password.success.can"
+	"auth.reset-password.success.can": "auth.reset-password.success.can",
+	"auth.new-password.set.successfully": "auth.new-password.set.successfully"
 }

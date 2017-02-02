@@ -541,21 +541,19 @@ module.exports = {
         we.log.info('newPassword: User not found', user);
         return res.serverError();
       }
-      user.updatePassword(newPassword, (err)=> {
+      user
+      .updatePassword(newPassword, (err)=> {
         if (err) return res.serverError(err);
         // Reset req.session.resetPassword to indicate that the operation has been completed
         if (req.session) {
           delete req.session.resetPassword;
         }
 
-        if (req.accepts('json')) {
-          return res.status(200).send({messages: res.locals.messages});
-        }
-
         res.addMessage('success', 'auth.new-password.set.successfully');
         res.locals.successfully = true;
 
-        return res.ok();
+        res.ok();
+        return null;
       });
 
       return null;
