@@ -1,5 +1,5 @@
 /**
- * Plugin.js file, set configs, routes, hooks and events here
+ * Main we-plugin-auth file
  *
  * see http://wejs.org/docs/we/plugin
  */
