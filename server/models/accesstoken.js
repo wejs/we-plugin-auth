@@ -9,7 +9,7 @@ const crypto = require('crypto');
 
 module.exports = function Model(we) {
   // set sequelize model define and options
-  const model = {
+  return {
     definition: {
       userId: {
         type: we.db.Sequelize.BIGINT,
@@ -38,7 +38,6 @@ module.exports = function Model(we) {
         defaultValue: true
       }
     },
-
     options: {
 
       enableAlias: false,
@@ -118,7 +117,5 @@ module.exports = function Model(we) {
         }
       }
     }
-  }
-
-  return model;
+  };
 }

@@ -38,7 +38,7 @@ const newPasswordValidation = {
 
 module.exports = function Model(we) {
   // Password model:
-  const model = {
+  return {
     definition: {
       userId : { type: we.db.Sequelize.BIGINT },
       active : { type: we.db.Sequelize.BOOLEAN, defaultValue: true },
@@ -109,8 +109,7 @@ module.exports = function Model(we) {
           bcrypt.compare(password, this.password, next);
         },
         toJSON() {
-          const obj = this.get();
-          return obj;
+          return this.get();
         }
       },
       hooks: {
@@ -156,9 +155,7 @@ module.exports = function Model(we) {
         },
       }
     }
-  }
-
-  return model;
+  };
 }
 
 /**

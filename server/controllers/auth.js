@@ -163,10 +163,9 @@ module.exports = {
     const we = req.we;
 
     we.auth.logOut(req, res, (err)=> {
-      if (err)
-      we.log.error('Error on logout user', req.id, req.cookie);
+      if (err) we.log.error('Error on logout user', req.id, req.cookie);
       res.goTo('/');
-    })
+    });
   },
   /**
    * Login API with session and passport-local strategy
@@ -180,7 +179,7 @@ module.exports = {
       return res.notFound();
     }
 
-    var email = req.body.email;
+    const email = req.body.email;
 
     if (req.method !== 'POST' || req.isAuthenticated()) {
       // else show login page
@@ -189,7 +188,7 @@ module.exports = {
     // --  set req.body for error page
     res.locals.data = req.body;
 
-    return we.passport.authenticate('local', function(err, user, info) {
+    return we.passport.authenticate('local', (err, user, info)=> {
       if (err) {
         we.log.error('AuthController:login:Error on get user ', err, email);
         return res.serverError(err);
@@ -213,7 +212,7 @@ module.exports = {
         return res.badRequest();
       }
 
-      we.auth.logIn(req, res, user, function (err) {
+      we.auth.logIn(req, res, user, (err)=> {
         if (err) return res.serverError(err);
         we.log.info('AuthController:login: user autheticated:', user.id, user.username);
 
@@ -235,19 +234,20 @@ module.exports = {
   /**
    * Activate a user account with activation code
    */
-  activate: function activate(req, res) {
-    var we = req.we;
+  activate(req, res) {
+    const we = req.we;
 
-    var user = {};
+    const user = {};
     user.id = req.params.id;
-    var token = req.params.token;
+    const token = req.params.token;
 
-    var responseForbiden = function responseForbiden() {
+    function responseForbiden() {
       res.addMessage('warning', 'auth.access.invalid.token');
       return res.goTo('/login');
-    };
+    }
 
-    we.db.models.authtoken.validAuthToken(user.id, token, function (err, result, authToken) {
+    we.db.models.authtoken
+    .validAuthToken(user.id, token, (err, result, authToken)=> {
       if (err) {
         we.log.error('auth:activate: Error on validate token: ', err, token, user.id);
         return responseForbiden();
@@ -260,8 +260,9 @@ module.exports = {
       }
 
       // token is valid then get user form db
-      we.db.models.user.findById(user.id)
-      .then(function (usr) {
+      we.db.models.user
+      .findById(user.id)
+      .then( (usr)=> {
         // user found
         if (!usr) {
           we.log.error('auth:activate: user not found: ', user.id);
@@ -272,15 +273,16 @@ module.exports = {
         usr.active = true;
 
         return usr.save()
-        .then(function () {
-          var rediredtUrl = ( authToken.redirectUrl || '/' );
+        .then( ()=> {
+          const rediredtUrl = ( authToken.redirectUrl || '/' );
           // destroy auth token after use
-          authToken.destroy()
-          .catch(function (err) {
+          authToken
+          .destroy()
+          .catch( (err)=> {
             if (err) we.log.error('Error on delete token', err);
           });
           // login and redirect the user
-          we.auth.logIn(req, res, usr, function(err) {
+          we.auth.logIn(req, res, usr, (err)=> {
             if (err) {
               we.log.error('logIn error:', err);
               return res.serverError(err);
@@ -289,7 +291,7 @@ module.exports = {
             return res.goTo(rediredtUrl);
           });
 
-          return null
+          return null;
         })
       })
       .catch(res.queryError);
@@ -300,10 +302,9 @@ module.exports = {
    * Forgot password API endpoint
    * Generate one reset token and send to user email
    */
-  forgotPassword: function forgotPassword(req, res) {
-    var we = req.we;
-
-    var email = req.body.email;
+  forgotPassword(req, res) {
+    const we = req.we,
+      email = req.body.email;
 
     res.locals.emailSend = false;
     res.locals.messages = [];
@@ -318,19 +319,21 @@ module.exports = {
       return res.badRequest('auth.forgot-password.field.email.required');
     }
 
-    we.db.models.user.find({ where: {email: email }})
-    .then(function (user) {
+    we.db.models.user
+    .find({ where: {email: email }})
+    .then( (user)=> {
       if (!user)
         return res.badRequest('auth.forgot-password.user.not-found');
 
-      we.db.models.authtoken.create({
+      we.db.models.authtoken
+      .create({
         userId: user.id, tokenType: 'resetPassword'
       })
-      .nodeify(function (err, token) {
+      .nodeify( (err, token)=> {
         if (err) return res.queryError(err)
 
         if (we.plugins['we-plugin-email']) {
-          var options = {
+          const options = {
             email: user.email,
             subject: we.config.appName + ' - ' + req.__('auth.forgot-password.reset-password'),
             from: we.config.email.siteEmail
@@ -342,7 +345,7 @@ module.exports = {
             user.displayName = user.username;
           }
 
-          var templateVariables = {
+          const templateVariables = {
             user: {
               name: user.username,
               displayName: user.displayName
@@ -354,7 +357,8 @@ module.exports = {
             resetPasswordUrl: token.getResetUrl()
           };
 
-          we.email.sendEmail('AuthResetPasswordEmail', options, templateVariables, function(err , emailResp) {
+          we.email
+          .sendEmail('AuthResetPasswordEmail', options, templateVariables, (err , emailResp)=> {
             if (err) {
               we.log.error('Error on send email AuthResetPasswordEmail', err, emailResp)
               return res.serverError()
@@ -365,13 +369,11 @@ module.exports = {
           res.locals.emailSend = true
         }
 
-        res.addMessage('success', 'auth.forgot-password.email.send')
-        if (req.accepts('json')) return res.ok()
-        res.ok()
+        res.addMessage('success', 'auth.forgot-password.email.send');
+        res.ok();
+      });
 
-      })
-
-      return null
+      return null;
     })
     .catch(res.queryError)
   },
@@ -380,41 +382,42 @@ module.exports = {
    * Generate and return one auth token
    * Only allow admin users in permissions
    */
-  authToken: function authToken(req, res) {
+  authToken(req, res) {
     if (!req.isAuthenticated()) return res.forbiden();
 
-    var we = req.we;
-
-    var email = req.params.email;
+    const we = req.we,
+      email = req.params.email;
 
     if (!email) {
       return res.badRequest('Email is required to request a password reset token.');
     }
 
-    we.db.models.user.find({ where: {email: email}})
-    .then(function (user) {
+    we.db.models.user
+    .find({ where: { email: email }})
+    .then( (user)=> {
       if (!user) return res.badRequest('unknow error trying to find a user');
 
-      return we.db.models.authtoken.create({
+      return we.db.models.authtoken
+      .create({
         'userId': user.id,
         tokenType: 'resetPassword'
       })
-      .then(function (token) {
+      .then( (token)=> {
         if (!token) {
           return res.serverError('unknow error on create auth token');
         }
 
-        res.json(token.getResetUrl())
-        return null
+        res.json(token.getResetUrl());
+        return null;
       })
     })
-    .catch(req.queryError)
+    .catch(req.queryError);
   },
 
   /**
    * Api endpoint to check if current user can change the password without old password
    */
-  checkIfCanResetPassword: function checkIfCanResetPassword(req, res) {
+  checkIfCanResetPassword(req, res) {
     if(!req.isAuthenticated()) return res.forbidden();
 
     if (req.session && req.session.resetPassword) {
@@ -426,18 +429,17 @@ module.exports = {
     return res.forbidden();
   },
 
-  consumeForgotPasswordToken: function consumeForgotPasswordToken(req, res, next) {
-    var we = req.we;
-
-    var uid = req.params.id;
-    var token = req.params.token;
+  consumeForgotPasswordToken(req, res, next) {
+    const we = req.we,
+      uid = req.params.id,
+      token = req.params.token;
 
     if (!uid || !token){
       we.log.info('consumeForgotPasswordToken: Uid of token not found', uid, token);
       return next();
     }
 
-    loadUserAndAuthToken(we, uid, token, function(error, user, authToken){
+    loadUserAndAuthToken(we, uid, token, (error, user, authToken)=> {
       if (error) {
         we.log.error('AuthController:consumeForgotPasswordToken: Error on loadUserAndAuthToken', error);
         return res.serverError();
@@ -459,32 +461,39 @@ module.exports = {
       } else {
         // If user dont are active, change and salve the active status
         user.active = true;
-        user.save().then(function () {
-          respondToUser();
-        });
+        user.save()
+        .then(respondToUser)
+        .catch(respondToUser);
       }
 
-      function respondToUser() {
-        we.auth.logIn(req, res, user, function (err) {
+      function respondToUser(err) {
+        if (err) return res.queryError(err);
+
+        we.auth.logIn(req, res, user, (err)=> {
           if (err) {
             we.log.error('AuthController:consumeForgotPasswordToken:logIn error', err);
-            return res.serverError(err)
+            return res.serverError(err);
           }
           // consumes the token
           authToken.isValid = false
-          authToken.destroy()
-          .then(function () {
+          authToken
+          .destroy()
+          .then( ()=> {
             // set session variable req.session.resetPassword to indicate that there is a new password to be defined
-            req.session.resetPassword = true
+            req.session.resetPassword = true;
 
-            res.goTo( '/auth/' + user.id + '/new-password')
+            res.goTo( '/auth/' + user.id + '/new-password');
 
-            return null
+            return null;
           })
-          .catch(function(err) {
-            if (err) we.log.error('auth:consumeForgotPasswordToken: Error on dstroy token:', err)
+          .catch( (err)=> {
+            if (err) we.log.error('auth:consumeForgotPasswordToken: Error on destroy token:', err);
+
+            return null;
           })
         })
+
+        return null;
       }
     })
   },
@@ -493,7 +502,7 @@ module.exports = {
    * newPassword page
    * Page to set new user password after click in new password link
    */
-  newPassword: function newPasswordAction (req, res) {
+  newPassword(req, res) {
     // not authenticated
     if (!req.isAuthenticated()) return res.goTo('/auth/forgot-password');
 
@@ -511,14 +520,13 @@ module.exports = {
       return res.goTo('/auth/forgot-password');
     }
 
-    var we = req.we;
+    const we = req.we;
 
     if (req.method !== 'POST') return res.ok();
 
-    var newPassword = req.body.newPassword;
-    var rNewPassword = req.body.rNewPassword;
-
-    var userId = req.params.id;
+    const newPassword = req.body.newPassword,
+      rNewPassword = req.body.rNewPassword,
+      userId = req.params.id;
 
     if ( we.utils._.isEmpty(newPassword) || we.utils._.isEmpty(rNewPassword) )
       return res.badRequest('auth.confirmPassword.and.password.required');
@@ -526,13 +534,14 @@ module.exports = {
     if (newPassword !== rNewPassword)
       return res.badRequest('auth.newPassword.and.password.diferent');
 
-    we.db.models.user.findById(userId)
-    .then(function (user) {
+    we.db.models.user
+    .findById(userId)
+    .then( (user)=> {
       if (!user) {
         we.log.info('newPassword: User not found', user);
         return res.serverError();
       }
-      user.updatePassword(newPassword, function (err) {
+      user.updatePassword(newPassword, (err)=> {
         if (err) return res.serverError(err);
         // Reset req.session.resetPassword to indicate that the operation has been completed
         if (req.session) {
@@ -549,7 +558,7 @@ module.exports = {
         return res.ok();
       });
 
-      return null
+      return null;
     })
     .catch(res.queryError);
   },
@@ -557,36 +566,40 @@ module.exports = {
   /**
    * Change authenticated user password
    */
-  changePassword: function changePassword(req, res) {
+  changePassword(req, res) {
     if(!req.isAuthenticated()) return res.goTo('/');
-    var we = req.we;
+    const we = req.we;
 
     if (req.method !== 'POST') return res.ok();
 
-    var oldPassword = req.body.password;
-    var newPassword = req.body.newPassword;
-    var rNewPassword = req.body.rNewPassword;
-    var userId = req.user.id;
+    const oldPassword = req.body.password,
+      newPassword = req.body.newPassword,
+      rNewPassword = req.body.rNewPassword,
+      userId = req.user.id;
 
-    if(!req.isAuthenticated())
+    if(!req.isAuthenticated()) {
       return res.badRequest('auth.change-password.forbiden');
+    }
 
-    // skip old password if have resetPassword flag in session
+    // skip old password if have resetPassword flag in session:
     if (we.config.session && req.session && !req.session.resetPassword) {
       if (!oldPassword)
         return res.badRequest('field.password.required');
     }
 
+    // password fields is required:
     if ( we.utils._.isEmpty(newPassword) || we.utils._.isEmpty(rNewPassword) ) {
       return res.badRequest('field.confirm-password.password.required');
     }
 
+    // password fields is diferent:
     if (newPassword !== rNewPassword) {
       return res.badRequest('field.password.confirm-password.diferent');
     }
 
-    we.db.models.user.findById(userId)
-    .nodeify(function (err, user) {
+    we.db.models.user
+    .findById(userId)
+    .nodeify( (err, user)=> {
       if (err) return res.queryError(err);
 
       if (!user) {
@@ -598,7 +611,7 @@ module.exports = {
       if (we.config.session && req.session && req.session.resetPassword) {
         return changePassword();
       } else {
-        user.verifyPassword(oldPassword, function(err, passwordOk) {
+        user.verifyPassword(oldPassword, (err, passwordOk)=> {
           if (!passwordOk) {
             return res.badRequest('field.password.invalid');
           }
@@ -609,7 +622,7 @@ module.exports = {
 
       function changePassword() {
         // set newPassword and save it for generate the password hash on update
-        user.updatePassword(newPassword, function (err) {
+        user.updatePassword(newPassword, (err)=> {
           if(err) {
             we.log.error('Error on save user to update password: ', err);
             return res.serverError(err);
@@ -620,9 +633,8 @@ module.exports = {
           }
 
           if (we.plugins['we-plugin-email']) {
-            var appName = we.config.appName;
-
-            var options = {
+            const appName = we.config.appName;
+            const options = {
               email: user.email,
               subject: appName + ' - ' + req.__('auth.change-password.reset-password'),
               from: we.config.email.siteEmail
@@ -634,7 +646,7 @@ module.exports = {
               user.displayName = user.username;
             }
 
-            var templateVariables = {
+            const templateVariables = {
               user: {
                 name: user.username,
                 displayName: user.displayName
@@ -646,7 +658,7 @@ module.exports = {
               }
             };
 
-            we.email.sendEmail('AuthChangePasswordEmail', options, templateVariables, function (err , emailResp) {
+            we.email.sendEmail('AuthChangePasswordEmail', options, templateVariables, (err , emailResp)=> {
               if (err) {
                 we.log.error('Error on send email AuthChangePasswordEmail', err, emailResp);
               }
@@ -669,21 +681,25 @@ module.exports = {
  * @param  {string}   token    user token
  * @param  {Function} callback    callback(error, user, authToken)
  */
-function loadUserAndAuthToken(we, uid, token, callback){
-  we.db.models.user.findById(uid)
-  .then(function (user) {
+function loadUserAndAuthToken(we, uid, token, callback) {
+  return we.db.models.user
+  .findById(uid)
+  .then( (user)=> {
 
     if (!user) {
       // user not found
       return callback(null, null, null);
     }
 
-    return we.db.models.authtoken.find({ where: {
-      userId: user.id,
-      token: token,
-      isValid: true
-    }})
-    .then(function (authToken) {
+    return we.db.models.authtoken
+    .find({
+      where: {
+        userId: user.id,
+        token: token,
+        isValid: true
+      }
+    })
+    .then( (authToken)=> {
       if (authToken) {
         callback(null, user, authToken);
       } else {
@@ -693,5 +709,5 @@ function loadUserAndAuthToken(we, uid, token, callback){
       return null;
     });
   })
-  .catch(callback)
+  .catch(callback);
 }
