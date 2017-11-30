@@ -93,6 +93,7 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       allowRegister: true,
       requireAccountActivation: true
     },
+    // overridable by systemSettings {recaptchaKey, recaptchaSecret}
     apiKeys: {
       // add google recaptcha key and secret in project config/local.js file for enable this feature
       // Requires cliend side recaptcha implementation in registration form how is avaible in we-plugin-form
@@ -100,6 +101,10 @@ module.exports = function loadPlugin(projectPath, Plugin) {
         key: null,
         secret: null
       }
+    },
+
+    publicSystemSettings: {
+      recaptchaKey: true
     }
   });
 
