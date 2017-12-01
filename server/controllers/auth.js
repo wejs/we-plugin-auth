@@ -97,17 +97,21 @@ module.exports = {
         })
         .then( (token)=> {
 
-          if (we.plugins['we-plugin-email']) {
-            const templateVariables = {
-              user: newUser,
-              site: {
-                name: we.config.appName
-              },
-              confirmUrl: we.config.hostname + '/user/'+ newUser.id +'/activate/' + token.token
-            };
+          if (we.plugins['we-plugin-email'] && newUser && newUser.toJSON) {
+            const templateVariables = newUser.toJSON();
+
+            templateVariables.siteName = we.config.appName;
+            templateVariables.email = newUser.email;
+            templateVariables.siteUrl = we.config.hostname;
+            templateVariables.confirmUrl = we.config.hostname + '/user/'+ newUser.id +'/activate/' + token.token;
+
+            if (we.systemSettings) {
+              if (we.systemSettings.siteName) {
+                templateVariables.siteName = we.systemSettings.siteName;
+              }
+            }
 
             const options = {
-              subject: req.__('we.email.AccontActivationEmail.subject', templateVariables),
               to: newUser.email
             };
             // send email in async
@@ -335,7 +339,6 @@ module.exports = {
         if (we.plugins['we-plugin-email']) {
           const options = {
             email: user.email,
-            subject: we.config.appName + ' - ' + req.__('auth.forgot-password.reset-password'),
             from: we.config.email.siteEmail
           };
 
@@ -346,16 +349,18 @@ module.exports = {
           }
 
           const templateVariables = {
-            user: {
-              name: user.username,
-              displayName: user.displayName
-            },
-            site: {
-              name: we.config.appName,
-              url: we.config.hostname
-            },
+            name: user.username,
+            displayName: user.displayName,
+            siteName: we.config.appName,
+            siteUrl: we.config.hostname,
             resetPasswordUrl: token.getResetUrl()
           };
+
+          if (we.systemSettings) {
+            if (we.systemSettings.siteName) {
+              templateVariables.siteName = we.systemSettings.siteName;
+            }
+          }
 
           we.email
           .sendEmail('AuthResetPasswordEmail', options, templateVariables, (err , emailResp)=> {
@@ -634,7 +639,6 @@ module.exports = {
             const appName = we.config.appName;
             const options = {
               email: user.email,
-              subject: appName + ' - ' + req.__('auth.change-password.reset-password'),
               from: we.config.email.siteEmail
             };
 
@@ -645,16 +649,17 @@ module.exports = {
             }
 
             const templateVariables = {
-              user: {
-                name: user.username,
-                displayName: user.displayName
-              },
-              site: {
-                name: appName,
-                slogan: we.config.slogan,
-                url: we.config.hostname
-              }
+              userame: user.username,
+              displayName: user.displayName,
+              siteName: appName,
+              siteUrl: we.config.hostname
             };
+
+            if (we.systemSettings) {
+              if (we.systemSettings.siteName) {
+                templateVariables.siteName = we.systemSettings.siteName;
+              }
+            }
 
             we.email.sendEmail('AuthChangePasswordEmail', options, templateVariables, (err , emailResp)=> {
               if (err) {
