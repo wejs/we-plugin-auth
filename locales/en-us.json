@@ -11,6 +11,7 @@
   "auth.access.invalid.token": "Access token is invalid",
   "auth.forgot-password": "Forgot password",
   "auth.forgot-password.reset-password": "Reset password",
+  "auth.login.throttle.limit": "You have reached the limit of login attempts, wait a few minutes to try again",
   "auth.forgot-password.email.send": "Reset password email was sent to your email",
   "auth.new-password": "New password",
   "auth.new-password.set.successfully": "Your password has been successfully updated",

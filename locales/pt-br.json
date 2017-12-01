@@ -10,6 +10,7 @@
   "Validation isEmail failed": "O formato do email é inválido",
   "auth.login.user.incorrect.password.or.email": "Email ou senha incorretos.",
   "auth.access.invalid.token": "O token de autenticação está inválido",
+  "auth.login.throttle.limit": "Você atingiu o limite de tentativas de login, aguarde alguns minutos para tentar novamente",
   "auth.forgot-password": "Mudar senha",
   "auth.forgot-password.reset-password": "Redefinir senha",
   "auth.forgot-password.email.send": "A nova senha foi enviada para seu email.",

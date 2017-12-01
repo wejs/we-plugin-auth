@@ -2,6 +2,8 @@
  * Authentication controller
  */
 
+const lt = require('../../lib/loginThrottle.js');
+
 module.exports = {
   _config: { acl: false },
   // getter for current logged in user
@@ -183,6 +185,17 @@ module.exports = {
       return res.notFound();
     }
 
+    if (!lt.canLogin(req)) {
+      const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+      we.log.warn('AuthController:login:throttle:', ip);
+      res.addMessage('warning', {
+        text: 'auth.login.throttle.limit'
+      });
+      lt.onLoginFail(req);
+      return res.badRequest();
+    }
+
     const email = req.body.email;
 
     if (req.method !== 'POST' || req.isAuthenticated()) {
@@ -194,6 +207,7 @@ module.exports = {
 
     return we.passport.authenticate('local', (err, user, info)=> {
       if (err) {
+        lt.onLoginFail(req);
         we.log.error('AuthController:login:Error on get user ', err, email);
         return res.serverError(err);
       }
@@ -204,6 +218,7 @@ module.exports = {
           text: info.message,
           vars: { email: email }
         });
+        lt.onLoginFail(req);
         return res.badRequest();
       }
 
@@ -224,6 +239,8 @@ module.exports = {
           we.log.error('logIn error: ', err);
           return res.serverError(err);
         }
+
+        lt.onLoginSuccess(req);
 
         res.locals.newUserCreated = true;
         // redirect if are a html response or have the redirectTo
@@ -291,6 +308,8 @@ module.exports = {
               we.log.error('logIn error:', err);
               return res.serverError(err);
             }
+
+            lt.onLoginSuccess(req);
 
             return res.goTo(rediredtUrl);
           });
