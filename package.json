@@ -8,20 +8,20 @@
     "coverage": "NODE_ENV=test LOG_LV=info node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- -u exports -R spec test/bootstrap.js test/**/*.test.js"
   },
   "dependencies": {
-    "bcryptjs": "2.4.0",
-    "passport": "0.3.2",
+    "bcryptjs": "2.4.3",
+    "passport": "0.4.0",
     "passport-local": "1.0.0",
-    "request": "^2.79.0"
+    "request": "^2.83.0"
   },
   "devDependencies": {
-    "async": "^2.1.4",
-    "express-mysql-session": "^1.2.0",
-    "fs-extra": "^1.0.0",
+    "async": "^2.6.0",
+    "express-mysql-session": "^1.2.3",
+    "fs-extra": "^4.0.2",
     "istanbul": "^0.4.5",
-    "mocha": "^3.2.0",
-    "mysql": "^2.12.0",
-    "sinon": "^1.17.7",
-    "supertest": "^2.0.1",
+    "mocha": "^4.0.1",
+    "mysql": "^2.15.0",
+    "sinon": "^4.1.2",
+    "supertest": "^3.0.0",
     "we-core": "wejs/we-core",
     "we-plugin-acl": "wejs/we-plugin-acl",
     "we-plugin-email": "wejs/we-plugin-email",

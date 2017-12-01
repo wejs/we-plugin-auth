@@ -105,6 +105,89 @@ module.exports = function loadPlugin(projectPath, Plugin) {
 
     publicSystemSettings: {
       recaptchaKey: true
+    },
+
+    emailTypes: {
+      AccontActivationEmail: {
+        label: 'Email de ativação após cadastro de conta de usuário',
+        templateVariables: {
+          confirmUrl: {
+            example: '/#example',
+            description: 'URL de confirmação de conta de usuário'
+          },
+          username: {
+            example: 'albertosouza',
+            description: 'Nome único do novo usuário'
+          },
+          displayName: {
+            example: 'Alberto',
+            description: 'Nome de exibição do novo usuário'
+          },
+          fullName: {
+            example: 'Alberto Souza',
+            description: 'Nome completo do novo usuário'
+          },
+          email: {
+            example: 'alberto@linkysystems.com',
+            description: 'Email do novo usuário'
+          },
+          siteName: {
+            example: 'Site Name',
+            description: 'Nome desse site'
+          },
+          siteUrl: {
+            example: '/#example',
+            description: 'URL desse site'
+          }
+        }
+
+      },
+      AuthResetPasswordEmail: {
+        label: 'Email de troca de senha',
+        templateVariables: {
+          username: {
+            example: 'alberto',
+            description: 'Nome único do usuário'
+          },
+          displayName: {
+            example: 'Alberto',
+            description: 'Nome de exibição do usuário'
+          },
+          siteName: {
+            example: 'Site Name',
+            description: 'Nome desse site'
+          },
+          siteUrl: {
+            example: '/#example',
+            description: 'URL desse site'
+          },
+          resetPasswordUrl: {
+            example: 'http://linkysystems.com/example',
+            description: 'URL de resetar a senha do usuário'
+          }
+        }
+      },
+      AuthChangePasswordEmail: {
+        label: 'Email de aviso de troca de senha',
+        templateVariables: {
+          username: {
+            example: 'alberto',
+            description: 'Nome único do usuário'
+          },
+          displayName: {
+            example: 'Alberto',
+            description: 'Nome de exibição do usuário'
+          },
+          siteName: {
+            example: 'Site Name',
+            description: 'Nome desse site'
+          },
+          siteUrl: {
+            example: '/#example',
+            description: 'URL desse site'
+          }
+        }
+      }
     }
   });
 
