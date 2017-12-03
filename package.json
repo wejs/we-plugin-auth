@@ -1,7 +1,7 @@
 {
   "name": "we-plugin-auth",
   "description": "We.js authentication plugin, add suport to passport and auth routes",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "main": "plugin.js",
   "scripts": {
     "test": "NODE_ENV=test LOG_LV=info ./node_modules/.bin/mocha test/bootstrap.js test/**/*.test.js",
