@@ -357,8 +357,7 @@ module.exports = {
 
         if (we.plugins['we-plugin-email']) {
           const options = {
-            email: user.email,
-            from: we.config.email.siteEmail
+            to: user.email
           };
 
           user = user.toJSON();
@@ -657,8 +656,7 @@ module.exports = {
           if (we.plugins['we-plugin-email']) {
             const appName = we.config.appName;
             const options = {
-              email: user.email,
-              from: we.config.email.siteEmail
+              to: user.email
             };
 
             user = user.toJSON();

@@ -520,7 +520,7 @@ describe('authFeature', function () {
         assert(we.email.sendEmail.calledOnce);
 
         assert.equal(we.email.sendEmail.args[0][0], 'AuthResetPasswordEmail');
-        assert.equal(we.email.sendEmail.args[0][1].email, salvedUser.email);
+        assert.equal(we.email.sendEmail.args[0][1].to, salvedUser.email);
         assert(we.email.sendEmail.args[0][2].resetPasswordUrl);
 
         we.email.sendEmail.restore();
