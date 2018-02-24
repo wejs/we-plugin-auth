@@ -107,17 +107,20 @@ module.exports = function Model(we) {
          * @param  {Object}   options sequelize create options
          * @param  {Function} next    callback
          */
-        beforeCreate(token, options, next) {
-          if (token.userId) {
-            // before create, set all user old tokens as invalid:
-            we.db.models.authtoken.invalidOldUserTokens(token.userId, function() {
-              // generete new token
-              token.token = crypto.randomBytes(25).toString('hex');
-              next(null, token);
-            });
-          } else {
-            next(null, token);
-          }
+        beforeCreate(token) {
+          return new Promise( (resolve)=> {
+            if (token.userId) {
+              // before create, set all user old tokens as invalid:
+              we.db.models.authtoken.invalidOldUserTokens(token.userId, function() {
+                // generete new token
+                token.token = crypto.randomBytes(25).toString('hex');
+                resolve();
+              });
+            } else {
+              resolve();
+            }
+          });
+
         }
       }
     }

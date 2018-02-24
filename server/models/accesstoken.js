@@ -107,13 +107,11 @@ module.exports = function Model(we) {
         }
       },
       hooks: {
-        beforeValidate(token, options, next) {
+        beforeValidate(token) {
           if (!token.token) {
             // generate the token string
             token.token = crypto.randomBytes(25).toString('hex');
           }
-
-          next(null, token);
         }
       }
     }

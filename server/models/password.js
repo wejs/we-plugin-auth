@@ -122,20 +122,21 @@ module.exports = function Model(we) {
          * @param  {Object}   options sequelize options
          * @param  {Function} next    callback
          */
-        beforeCreate(record, options, next) {
-          this.generatePassword(record.password, (err, hash)=> {
-            if (err) return next(err);
-            record.password = hash;
-            // remove old user paswords on create an new one:
-            we.db.models.password
-            .destroy({
-              where: { userId: record.userId }
-            })
-            .nodeify( (err, result)=> {
-              next(err, result);
-              return null;
+        beforeCreate(record) {
+          return new Promise( (resolve, reject)=> {
+            this.generatePassword(record.password, (err, hash)=> {
+              if (err) return reject(err);
+              record.password = hash;
+              // remove old user paswords on create an new one:
+              we.db.models.password
+              .destroy({
+                where: { userId: record.userId }
+              })
+              .then(()=> { resolve(); })
+              .catch(reject);
             });
           });
+
         },
         /**
          * Before update record
@@ -144,15 +145,17 @@ module.exports = function Model(we) {
          * @param  {Object}   options sequeslize options
          * @param  {Function} next    callback
          */
-        beforeUpdate(record, options, next) {
-          // generate an new hash on every update of the password record:
-          this.generatePassword(record.password, (err, hash)=> {
-            if (err) return next(err);
-            record.password = hash;
-            next(null, record);
-            return null;
+        beforeUpdate(record) {
+          return new Promise( (resolve, reject)=> {
+            // generate an new hash on every update of the password record:
+            this.generatePassword(record.password, (err, hash)=> {
+              if (err) return reject(err);
+              record.password = hash;
+              resolve();
+              return null;
+            });
           });
-        },
+        }
       }
     }
   };
