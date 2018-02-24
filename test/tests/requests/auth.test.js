@@ -256,7 +256,7 @@ describe('authFeature', function () {
             res.body.messages[0].message
           );
           assert.equal(
-            'Validation isEmail failed',
+            'Validation isEmail on confirmEmail failed',
             res.body.messages[1].message
           );
           we.log.warn.restore();

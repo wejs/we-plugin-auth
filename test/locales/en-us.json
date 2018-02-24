@@ -17,5 +17,6 @@
 	"response.forbidden.title": "response.forbidden.title",
 	"auth.reset-password.success.can": "auth.reset-password.success.can",
 	"auth.new-password.set.successfully": "auth.new-password.set.successfully",
-	"forbidden": "forbidden"
+	"forbidden": "forbidden",
+	"Validation isEmail on confirmEmail failed": "Validation isEmail on confirmEmail failed"
 }

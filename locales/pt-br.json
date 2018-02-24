@@ -7,7 +7,7 @@
   "login.block.form.new.account.link": "login.block.form.new.account.link",
   "auth.confirmPassword.and.newPassword.diferent": "A senha de confirmação e a nova senha são diferentes.",
   "auth.email.and.confirmEmail.diferent": "O e-mail de confirmação é diferente do e-mail informado.",
-  "Validation isEmail failed": "O formato do email é inválido",
+  "Validation isEmail on confirmEmail failed": "O formato do email é inválido",
   "auth.login.user.incorrect.password.or.email": "Email ou senha incorretos.",
   "auth.access.invalid.token": "O token de autenticação está inválido",
   "auth.login.throttle.limit": "Você atingiu o limite de tentativas de login, aguarde alguns minutos para tentar novamente",
