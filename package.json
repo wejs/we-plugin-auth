@@ -1,7 +1,7 @@
 {
   "name": "we-plugin-auth",
   "description": "We.js authentication plugin, add suport to passport and auth routes",
-  "version": "1.3.1",
+  "version": "2.0.0",
   "main": "plugin.js",
   "scripts": {
     "test": "NODE_ENV=test LOG_LV=info ./node_modules/.bin/mocha test/bootstrap.js test/**/*.test.js",
@@ -15,12 +15,12 @@
     "request": "^2.83.0"
   },
   "devDependencies": {
-    "mysql2": "^1.5.2",
     "async": "^2.6.0",
     "express-mysql-session": "^1.2.3",
     "fs-extra": "^5.0.0",
     "istanbul": "^0.4.5",
     "mocha": "^5.0.1",
+    "mysql2": "^1.5.2",
     "sinon": "^4.4.1",
     "supertest": "^3.0.0",
     "we-core": "^2",
