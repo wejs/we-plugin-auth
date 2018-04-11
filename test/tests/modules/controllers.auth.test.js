@@ -80,17 +80,25 @@ describe('controllers.auth', function () {
 
     it('newPassword action should run res.goTo if req.session.resetPassword is true and req.user.id is diferent than req.params.id', function (done) {
       var res = { locals: {}, goTo: function(){}};
+      const aclD = we.config.acl.disabled;
+      we.config.acl.disabled = false;
+
       sinon.spy(res, 'goTo');
       controller.newPassword({
         we: we,
         params: { id: 100212312 },
         session: { resetPassword: true },
         isAuthenticated: function() { return true },
-        user: user
+        user: user,
+        userRoleNames: ['authenticated']
       }, res);
+
       assert(res.goTo.called);
       assert.equal(res.goTo.firstCall.args[0], '/auth/'+user.id+'/new-password');
+
       done();
+
+      we.config.acl.disabled = aclD;
     });
   });
 });
