@@ -323,7 +323,7 @@ module.exports = {
 
   /**
    * Forgot password API endpoint
-   * Generate one reset token and send to user email
+   * Generate one time reset token and send to user email
    */
   forgotPassword(req, res) {
     const we = req.we,
@@ -343,10 +343,11 @@ module.exports = {
     }
 
     we.db.models.user
-    .find({ where: {email: email }})
+    .find({ where: { email: email }})
     .then( (user)=> {
-      if (!user)
+      if (!user || user.blocked) {
         return res.badRequest('auth.forgot-password.user.not-found');
+      }
 
       we.db.models.authtoken
       .create({

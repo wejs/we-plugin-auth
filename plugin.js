@@ -53,24 +53,31 @@ module.exports = function loadPlugin(projectPath, Plugin) {
           usernameField: 'email',
           passwordField: 'password',
           session: true,
-          findUser: function findUserAndValidPassword(email, password, done) {
-            var we = this.we;
+          findUser(email, password, done) {
+            const we = this.we;
             // build the find user query
-            var query = { where: {} };
+            let query = { where: {} };
             query.where[we.config.passport.strategies.local.usernameField] = email;
             // find user in DB
-            we.db.models.user.find(query)
-            .then (function (user) {
+            we.db.models.user
+            .find(query)
+            .then ( (user)=> {
               if (!user) {
-                return done(null, false, { message: 'auth.login.wrong.email.or.password' });
+                done(null, false, { message: 'auth.login.wrong.email.or.password' });
+                return null;
+              } else if (user.blocked) {
+                done(null, false, { message: 'auth.login.user.blocked' });
+                return null;
               }
               // get the user password
               return user.getPassword()
-              .then(function (passwordObj) {
-                if (!passwordObj)
-                  return done(null, false, { message: 'auth.login.user.dont.have.password' });
+              .then( (passwordObj)=> {
+                if (!passwordObj) {
+                  done(null, false, { message: 'auth.login.user.dont.have.password' });
+                  return null;
+                }
 
-                passwordObj.validatePassword(password, function (err, isValid) {
+                passwordObj.validatePassword(password, (err, isValid)=> {
                   if (err) return done(err);
                   if (!isValid) {
                     return done(null, false, { message: 'auth.login.user.incorrect.password.or.email' });
@@ -82,7 +89,7 @@ module.exports = function loadPlugin(projectPath, Plugin) {
                 return null;
               })
             })
-            .catch(done)
+            .catch(done);
           }
         }
       }
@@ -363,11 +370,12 @@ module.exports = function loadPlugin(projectPath, Plugin) {
 
         if (!password) {
           // create one password if this user dont have one
-          we.db.models.password.create({
+          we.db.models.password
+          .create({
             userId: user.id,
             password: newPassword
           })
-          .then(function (password) {
+          .then( (password)=> {
             cb(null, password);
             return null;
           })
@@ -375,9 +383,9 @@ module.exports = function loadPlugin(projectPath, Plugin) {
           // update
           password.password = newPassword;
           password.save()
-          .then(function (r) {
-            cb(null, r)
-            return null
+          .then( (r)=> {
+            cb(null, r);
+            return null;
           });
         }
 
@@ -388,7 +396,7 @@ module.exports = function loadPlugin(projectPath, Plugin) {
     done();
   }
 
-  plugin.hooks.on('we:before:load:plugin:features', function(we, done){
+  plugin.hooks.on('we:before:load:plugin:features', (we, done)=> {
     we.antiSpam = require('./lib/antiSpam');
     // load we.js auth logic
     we.auth = require('./lib');
