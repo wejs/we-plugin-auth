@@ -6,9 +6,17 @@ const lt = require('../../lib/loginThrottle.js');
 
 module.exports = {
   _config: { acl: false },
-  // getter for current logged in user
+  /**
+   * Getter for current logged in user
+   */
   current(req, res) {
     if (!req.isAuthenticated() ) return res.send({});
+
+    if (req.user.blocked) {
+      req.we.log.warn('auth.user.blocked.on.current', req.user.id);
+      return res.badRequest('auth.user.blocked');
+    }
+
     return res.ok(req.user);
   },
   /**
@@ -222,6 +230,12 @@ module.exports = {
         return res.badRequest();
       }
 
+      if (user.blocked) {
+        we.log.warn('auth.user.blocked.on.login', user.id);
+        res.addMessage('danger', 'user.blocked');
+        return res.goTo('/');
+      }
+
       if (!user.active) {
         we.log.debug('AuthController:login:User not active', email);
         res.addMessage('warning', {
@@ -290,6 +304,13 @@ module.exports = {
           // user not found
           return res.badRequest();
         }
+
+        if (usr.blocked) {
+          we.log.warn('auth.user.blocked.on.activate', usr.id);
+          res.addMessage('danger', 'user.blocked');
+          return res.goTo('/');
+        }
+
         // activate user and login
         usr.active = true;
 
@@ -345,8 +366,13 @@ module.exports = {
     we.db.models.user
     .find({ where: { email: email }})
     .then( (user)=> {
-      if (!user || user.blocked) {
-        return res.badRequest('auth.forgot-password.user.not-found');
+      if (!user) {
+        return res.badRequest('auth.forgot-password.user.not-found', user.id);
+      }
+
+      if (user.blocked) {
+        we.log.warn('auth.user.blocked.on.forgotPassword', user.id);
+        return res.badRequest('auth.forgot-password.user.not-found', user.id);
       }
 
       we.db.models.authtoken
@@ -421,6 +447,12 @@ module.exports = {
     .then( (user)=> {
       if (!user) return res.badRequest('unknow error trying to find a user');
 
+      if (user.blocked) {
+        we.log.warn('auth.user.blocked.on.authtoken', user.id);
+        res.addMessage('danger', 'user.blocked');
+        return res.goTo('/');
+      }
+
       return we.db.models.authtoken
       .create({
         'userId': user.id,
@@ -478,6 +510,11 @@ module.exports = {
           message: req.__('auth.consumeForgotPasswordToken.token.invalid')
         }]);
         return res.goTo('/auth/forgot-password');
+      }
+
+      if (user.blocked) {
+        res.addMessage('danger', 'user.blocked');
+        return res.goTo('/');
       }
 
       if (user.active) {
