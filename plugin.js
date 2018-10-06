@@ -40,7 +40,7 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       cookieDomain: 'localhost:' + ( process.env.PORT || '3000' ),
       cookieName: 'weoauth',
       cookieSecure: false,
-      expiresTime: 900000, // time to expires token and session
+      expiresTime: 31536000000, // time to expires token and session
 
       strategies: {
         // session
