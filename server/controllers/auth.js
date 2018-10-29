@@ -115,6 +115,10 @@ module.exports = {
             templateVariables.siteUrl = we.config.hostname;
             templateVariables.confirmUrl = we.config.hostname + '/user/'+ newUser.id +'/activate/' + token.token;
 
+            templateVariables.displayName = (
+              newUser.displayName || newUser.fullName
+            );
+
             if (we.systemSettings) {
               if (we.systemSettings.siteName) {
                 templateVariables.siteName = we.systemSettings.siteName;
@@ -395,7 +399,7 @@ module.exports = {
 
           const templateVariables = {
             name: user.username,
-            displayName: user.displayName,
+            displayName: (user.displayName || user.fullName),
             siteName: we.config.appName,
             siteUrl: we.config.hostname,
             resetPasswordUrl: token.getResetUrl()
@@ -707,7 +711,7 @@ module.exports = {
 
             const templateVariables = {
               userame: user.username,
-              displayName: user.displayName,
+              displayName: (user.displayName || user.fullName),
               siteName: appName,
               siteUrl: we.config.hostname
             };
