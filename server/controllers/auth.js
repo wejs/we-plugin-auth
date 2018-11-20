@@ -63,9 +63,16 @@ module.exports = {
         });
       },
       function checkUSerAcceptTermsField(cb) {
-        if (!req.body.acceptTerms || req.body.acceptTerms == 'false') {
+        if (
+          !req.body.acceptTerms ||
+          req.body.acceptTerms == 'false' ||
+          req.body.acceptTerms == 'off'
+        ) {
           cb('auth.register.acceptTerms.required');
         } else {
+          if (req.body.acceptTerms == 'on' || req.body.acceptTerms == 'true')
+            req.body.acceptTerms = true;
+
           cb();
         }
       },
