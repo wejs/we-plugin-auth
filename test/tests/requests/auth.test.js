@@ -448,7 +448,8 @@ describe('authFeature', function () {
           .end(function (err, res) {
             if (err) throw err;
             // get user from db to check if are active
-            we.db.models.user.findById(salvedUser.id).then(function(user) {
+            we.db.models.user.findOne({ where: { id: salvedUser.id } } )
+            .then(function(user) {
               assert.equal(true, user.active);
               // todo add a static login form
               done();

@@ -63,7 +63,7 @@ module.exports = function Model(we) {
         */
         validAccessToken(userId, token, cb) {
           // then get user token form db
-          we.db.models.accesstoken.find({ where: {
+          we.db.models.accesstoken.findOne({ where: {
             token: token
           }})
           .nodeify(function (err, accessToken) {

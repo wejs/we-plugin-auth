@@ -84,7 +84,7 @@ describe('moduleAuth', function () {
         auth.util.expireToken(t.token, we, function(err, tokenR) {
           if (err) throw err;
           assert(tokenR);
-          we.db.models.accesstoken.findById(t.id)
+          we.db.models.accesstoken.findOne({ where: { id: t.id } })
           .then(function (ts){
             assert(ts);
             assert.equal(false, ts.isValid);

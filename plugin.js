@@ -60,7 +60,7 @@ module.exports = function loadPlugin(projectPath, Plugin) {
             query.where[we.config.passport.strategies.local.usernameField] = email;
             // find user in DB
             we.db.models.user
-            .find(query)
+            .findOne(query)
             .then ( (user)=> {
               if (!user) {
                 done(null, false, { message: 'auth.login.wrong.email.or.password' });

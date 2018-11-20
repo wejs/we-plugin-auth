@@ -307,7 +307,7 @@ module.exports = {
 
       // token is valid then get user form db
       we.db.models.user
-      .findById(user.id)
+      .findOne({ where: {id: user.id}})
       .then( (usr)=> {
         // user found
         if (!usr) {
@@ -375,7 +375,7 @@ module.exports = {
     }
 
     we.db.models.user
-    .find({ where: { email: email }})
+    .findOne({ where: { email: email }})
     .then( (user)=> {
       if (!user) {
         return res.badRequest('auth.forgot-password.user.not-found', user.id);
@@ -454,7 +454,7 @@ module.exports = {
     }
 
     we.db.models.user
-    .find({ where: { email: email }})
+    .findOne({ where: { email: email }})
     .then( (user)=> {
       if (!user) return res.badRequest('unknow error trying to find a user');
 
@@ -609,7 +609,7 @@ module.exports = {
       return res.badRequest('auth.newPassword.and.password.diferent');
 
     we.db.models.user
-    .findById(userId)
+    .findOne({ where: { id: userId } })
     .then( (user)=> {
       if (!user) {
         we.log.info('newPassword: User not found', user);
@@ -670,7 +670,7 @@ module.exports = {
     }
 
     we.db.models.user
-    .findById(userId)
+    .findOne({ where: { id: userId } })
     .nodeify( (err, user)=> {
       if (err) return res.queryError(err);
 
@@ -754,7 +754,7 @@ module.exports = {
  */
 function loadUserAndAuthToken(we, uid, token, callback) {
   return we.db.models.user
-  .findById(uid)
+  .findOne({ where: { id: uid } })
   .then( (user)=> {
 
     if (!user) {
@@ -763,7 +763,7 @@ function loadUserAndAuthToken(we, uid, token, callback) {
     }
 
     return we.db.models.authtoken
-    .find({
+    .findOne({
       where: {
         userId: user.id,
         token: token,

@@ -16,7 +16,7 @@ module.exports = function uliCommand(program, helpers) {
       const uid = process.argv[3];
       if (! Number(uid) ) return doneAll('Invalid Uid');
 
-      we.db.models.user.findById(uid)
+      we.db.models.user.findOne({ where: {id : uid} })
       .then( (user)=> {
         we.db.models.authtoken
         .create({

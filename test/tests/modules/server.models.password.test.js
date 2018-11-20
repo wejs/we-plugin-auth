@@ -24,7 +24,7 @@ describe('serverModelsPassport', function () {
       assert.notEqual(pass, p.password);
       assert(p.active);
 
-      password.findById(p.id)
+      password.findOne({ where: { id: p.id } })
       .then(function(p){
 
         assert.notEqual(pass, p.password);
