@@ -378,7 +378,7 @@ module.exports = {
     .findOne({ where: { email: email }})
     .then( (user)=> {
       if (!user) {
-        return res.badRequest('auth.forgot-password.user.not-found', user.id);
+        return res.badRequest('auth.forgot-password.user.not-found', email);
       }
 
       if (user.blocked) {
