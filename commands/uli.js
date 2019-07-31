@@ -7,7 +7,8 @@ module.exports = function uliCommand(program, helpers) {
   program
   .command('uli [id]')
   .description('Get one time login url')
-  .action(function run() {
+  .option('-C, --console', 'Use console.log to output auth url')
+  .action(function run(opts) {
     we = helpers.getWe();
 
     we.bootstrap( (err, we)=> {
@@ -27,7 +28,13 @@ module.exports = function uliCommand(program, helpers) {
           if (!token) {
             doneAll('unknow error on create auth token');
           } else {
-            we.log.info('resetUrl>>', token.getResetUrl());
+            if (!opts.console) {
+              console.log('resetUrl>>', token.getResetUrl());
+            } else {
+              // default
+              we.log.info('resetUrl>>', token.getResetUrl());
+            }
+
             doneAll();
           }
           return null;
