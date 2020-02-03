@@ -444,7 +444,7 @@ module.exports = {
    * Only allow admin users in permissions
    */
   authToken(req, res) {
-    if (!req.isAuthenticated()) return res.forbiden();
+    if (!req.isAuthenticated()) return res.forbidden();
 
     const we = req.we,
       email = req.params.email;
