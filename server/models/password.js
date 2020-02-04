@@ -69,7 +69,7 @@ module.exports = function Model(we) {
          * @param  {Function} next     callback
          */
         generatePassword(password, next) {
-          const SALT_WORK_FACTOR = this.options.SALT_WORK_FACTOR;
+          const SALT_WORK_FACTOR = process.env.APP_BCRYPT_SALT_WORK_FACTOR || this.options.SALT_WORK_FACTOR;
 
           return bcrypt.genSalt(SALT_WORK_FACTOR, function(err, salt) {
             return bcrypt.hash(password, salt, next);
@@ -152,7 +152,6 @@ module.exports = function Model(we) {
               if (err) return reject(err);
               record.password = hash;
               resolve();
-              return null;
             });
           });
         }
