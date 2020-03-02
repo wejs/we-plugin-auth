@@ -17,9 +17,9 @@ module.exports = function uliCommand(program, helpers) {
       const uid = process.argv[3];
       if (! Number(uid) ) return doneAll('Invalid Uid');
 
-      we.db.models.user.findOne({ where: {id : uid} })
+      we.db.models.user.findOne({ where: { id : uid} })
       .then( (user)=> {
-        we.db.models.authtoken
+        return we.db.models.authtoken
         .create({
           'userId': user.id,
           tokenType: 'resetPassword'
@@ -29,28 +29,27 @@ module.exports = function uliCommand(program, helpers) {
             doneAll('unknow error on create auth token');
           } else {
             if (!opts.console) {
-              console.log('resetUrl>>', token.getResetUrl());
+              console.log('resetUrl>>', { token: token.getResetUrl() });
             } else {
               // default
-              we.log.info('resetUrl>>', token.getResetUrl());
+              we.log.info('resetUrl>>', { token: token.getResetUrl() });
             }
 
             doneAll();
           }
-          return null;
         });
-
-        return null;
-      });
+      })
+      .catch(doneAll);
     });
 
     function doneAll(err) {
       if ( err ) {
-        we.log.error('Error get user login link', err);
+        we.log.error('Error get user login link', {
+          errro: err
+        });
       }
       // end / exit
       process.exit();
-      return null;
     }
   });
 }
