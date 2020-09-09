@@ -391,7 +391,7 @@ module.exports = {
         userId: user.id, tokenType: 'resetPassword'
       })
       .nodeify( (err, token)=> {
-        if (err) return res.queryError(err)
+        if (err) return res.queryError(err);
 
         if (we.plugins['we-plugin-email']) {
           const options = {
@@ -405,11 +405,13 @@ module.exports = {
           }
 
           const templateVariables = {
+            userId: user.id,
             name: user.username,
             displayName: (user.displayName || user.fullName),
             siteName: we.config.appName,
             siteUrl: we.config.hostname,
-            resetPasswordUrl: token.getResetUrl()
+            resetPasswordUrl: token.getResetUrl(),
+            token: token.token
           };
 
           if (we.systemSettings) {
@@ -421,7 +423,7 @@ module.exports = {
           we.email
           .sendEmail('AuthResetPasswordEmail', options, templateVariables, (err , emailResp)=> {
             if (err) {
-              we.log.error('Error on send email AuthResetPasswordEmail', err, emailResp)
+              we.log.error('Error on send email AuthResetPasswordEmail', { err, emailResp});
               return res.serverError()
             }
             we.log.verbose('AuthResetPasswordEmail: Email resp:', emailResp)
@@ -437,6 +439,94 @@ module.exports = {
       return null;
     })
     .catch(res.queryError)
+  },
+
+  checkIfResetPasswordTokenIsValid(req, res) {
+    const we = req.we;
+    const models = we.db.models;
+
+    const token = req.body.token;
+    const userId = req.params.userId;
+
+    if (!token) {
+      return res.badRequest('Token body param is required');
+    }
+
+    if (!userId) {
+      return res.badRequest('user id param is required');
+    }
+
+    models.authtoken.findOne({
+      where :{
+        userId: userId,
+        tokenType: 'resetPassword',
+        token: token
+      }
+    })
+    .then((r)=> {
+      if (r && r.isValid) {
+        res.ok({
+          isValid: true
+        });
+      } else {
+        res.ok({
+          isValid: false
+        });
+      }
+    })
+    .catch(res.queryError);
+  },
+
+  changePasswordWithToken(req, res) {
+    const we = req.we;
+    const isEmpty = we.utils._.isEmpty;
+    const uid = req.params.userId;
+    const token = req.body.token;
+    const newPassword = req.body.newPassword;
+    const rNewPassword = req.body.rNewPassword;
+
+
+    if ( isEmpty(newPassword) || isEmpty(rNewPassword) )
+      return res.badRequest('auth.confirmPassword.and.password.required');
+
+    if (newPassword !== rNewPassword)
+      return res.badRequest('auth.newPassword.and.password.diferent');
+
+    loadUserAndAuthToken(we, uid, token, (error, user, authToken)=> {
+      if (error) {
+        we.log.error('AuthController:consumeForgotPasswordToken: Error on loadUserAndAuthToken', { error });
+        return res.serverError();
+      }
+
+      if (!user) {
+        we.log.info('changePasswordWithToken: User not found', { user });
+        return res.serverError();
+      }
+
+      if (
+        !authToken ||
+        !authToken.isValid ||
+        ( authToken.userId != user.id )
+       )  {
+
+        we.log.info('changePasswordWithToken: Token is invalid', { user, authToken });
+        return res.badRequest('changePasswordWithToken.token.is.invalid');
+      }
+
+      user.updatePassword(newPassword, (err)=> {
+        if (err) return res.serverError(err);
+        // Reset req.session.resetPassword to indicate that the operation has been completed
+        if (req.session) {
+          delete req.session.resetPassword;
+        }
+
+        res.addMessage('success', 'auth.new-password.set.successfully');
+        res.locals.successfully = true;
+
+        res.ok();
+      })
+      .catch(res.queryError);
+    });
   },
 
   /**
@@ -483,6 +573,7 @@ module.exports = {
 
   /**
    * Api endpoint to check if current user can change the password without old password
+   * This endpoint uses session
    */
   checkIfCanResetPassword(req, res) {
     if(!req.isAuthenticated()) return res.forbidden();
@@ -502,18 +593,18 @@ module.exports = {
       token = req.params.token;
 
     if (!uid || !token){
-      we.log.info('consumeForgotPasswordToken: Uid of token not found', uid, token);
+      we.log.info('consumeForgotPasswordToken: Uid or token not found', { uid, token });
       return next();
     }
 
     loadUserAndAuthToken(we, uid, token, (error, user, authToken)=> {
       if (error) {
-        we.log.error('AuthController:consumeForgotPasswordToken: Error on loadUserAndAuthToken', error);
+        we.log.error('AuthController:consumeForgotPasswordToken: Error on loadUserAndAuthToken', { error });
         return res.serverError();
       }
 
       if (!user || !authToken) {
-        we.log.warn('consumeForgotPasswordToken: invalid token: ', token, ' for uid: ', uid);
+        we.log.warn('consumeForgotPasswordToken: invalid token: ', { token, uid } );
 
         req.flash('messages',[{
           status: 'warning',
@@ -543,7 +634,7 @@ module.exports = {
 
         we.auth.logIn(req, res, user, (err)=> {
           if (err) {
-            we.log.error('AuthController:consumeForgotPasswordToken:logIn error', err);
+            we.log.error('AuthController:consumeForgotPasswordToken:logIn error', { err });
             return res.serverError(err);
           }
           // consumes the token

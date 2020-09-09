@@ -187,6 +187,10 @@ Atenciosamente,
 {{siteName}}
 {{siteUrl}}`,
         templateVariables: {
+          userId: {
+            example: '1',
+            description: 'Id do usuário'
+          },
           username: {
             example: 'alberto',
             description: 'Nome único do usuário'
@@ -206,6 +210,10 @@ Atenciosamente,
           resetPasswordUrl: {
             example: 'http://linkysystems.com/example',
             description: 'URL de resetar a senha do usuário'
+          },
+          token: {
+            example: 'akdçkdakskcappckscoakcapcksckacpsckp',
+            description: 'Token to use in custom urls'
           }
         }
       },
@@ -364,6 +372,18 @@ Atenciosamente,
       'action'        : 'newPassword',
       'template'      : 'auth/new-password',
       'breadcrumbHandler': 'auth'
+    },
+    'post /auth/:userId([0-9]+)/check-if-reset-password-token-is-valid': {
+      controller: 'auth',
+      action: 'checkIfResetPasswordTokenIsValid',
+      responseType: 'json',
+      permission: true
+    },
+    'post /auth/:userId([0-9]+)/change-password-with-token': {
+      controller: 'auth',
+      action: 'changePasswordWithToken',
+      responseType: 'json',
+      permission: true
     }
   });
 
