@@ -13,7 +13,7 @@ module.exports = {
     if (!req.isAuthenticated() ) return res.send({});
 
     if (req.user.blocked) {
-      req.we.log.warn('auth.user.blocked.on.current', req.user.id);
+      req.we.log.warn('auth.user.blocked.on.current', { id: req.user.id });
       return res.badRequest('auth.user.blocked');
     }
 
@@ -28,7 +28,7 @@ module.exports = {
     if (!we.config.auth.allowRegister) return res.forbidden();
     // anti spam honeypot field
     if (req.body.mel) {
-      we.log.info('Bot get mel:', req.ip, req.body.email);
+      we.log.info('Bot get mel:', { ip: req.ip, email: req.body.email });
       return res.forbidden();
     }
 
@@ -45,7 +45,10 @@ module.exports = {
         we.antiSpam.recaptcha.verify(req, res, (err, isSpam)=> {
           if (err) return cb(err);
           if (isSpam) {
-            we.log.warn('auth.signup: spambot found in recaptcha verify: ', req.ip, req.body.email);
+            we.log.warn('auth.signup: spambot found in recaptcha verify: ', {
+              ip: req.ip,
+              email: req.body.email
+            });
 
             res.addMessage('warning', {
               text: 'auth.register.spam',
@@ -94,14 +97,16 @@ module.exports = {
           });
         })
         .then( ()=> {
-          we.log.info( 'Auth plugin:New user:', req.body.email , 'username:' , req.body.username , 'ID:' , newUser.id );
-          cb();
+          we.log.info( 'Auth plugin:New user:', {
+            email: req.body.email,
+            username: req.body.username,
+            id: newUser.id
+          });
 
-          return null;
+          cb();
         })
         .catch( (err)=> {
           cb(err);
-          return null;
         });
       }
     ], function afterCreateUserAndPassword(err) {
@@ -140,7 +145,9 @@ module.exports = {
               options, templateVariables,
             (err)=> {
               if (err) {
-                we.log.error('Action:Login sendAccontActivationEmail:', err);
+                we.log.error('Action:Login sendAccontActivationEmail:', {
+                  error: err
+                });
               }
             });
           }
@@ -164,7 +171,9 @@ module.exports = {
 
       we.auth.logIn(req, res, newUser, (err)=> {
         if (err) {
-          we.log.error('logIn error: ', err);
+          we.log.error('logIn error: ', {
+            error: err
+          });
           return res.serverError(err);
         }
 
@@ -188,7 +197,10 @@ module.exports = {
     const we = req.we;
 
     we.auth.logOut(req, res, (err)=> {
-      if (err) we.log.error('Error on logout user', req.id, req.cookie);
+      if (err) we.log.error('Error on logout user', {
+        id: req.id,
+        cookie: req.cookie
+      });
       res.goTo('/');
     });
   },
@@ -207,7 +219,7 @@ module.exports = {
     if (!lt.canLogin(req)) {
       const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-      we.log.warn('AuthController:login:throttle:', ip);
+      we.log.warn('AuthController:login:throttle:', { ip: ip });
       res.addMessage('warning', {
         text: 'auth.login.throttle.limit'
       });
@@ -227,12 +239,17 @@ module.exports = {
     return we.passport.authenticate('local', (err, user, info)=> {
       if (err) {
         lt.onLoginFail(req);
-        we.log.error('AuthController:login:Error on get user ', err, email);
+        we.log.error('AuthController:login:Error on get user ', {
+          error: err,
+          email
+        });
         return res.serverError(err);
       }
 
       if (!user) {
-        we.log.debug('AuthController:login:User not found', email);
+        we.log.debug('AuthController:login:User not found', {
+          email
+        });
         res.addMessage('warning', {
           text: info.message,
           vars: { email: email }
@@ -242,13 +259,13 @@ module.exports = {
       }
 
       if (user.blocked) {
-        we.log.warn('auth.user.blocked.on.login', user.id);
+        we.log.warn('auth.user.blocked.on.login', { id: user.id });
         res.addMessage('danger', 'user.blocked');
         return res.goTo('/');
       }
 
       if (!user.active) {
-        we.log.debug('AuthController:login:User not active', email);
+        we.log.debug('AuthController:login:User not active', { email });
         res.addMessage('warning', {
           text: 'auth.login.user.not.active',
           vars: { email: email }
@@ -258,10 +275,13 @@ module.exports = {
 
       we.auth.logIn(req, res, user, (err)=> {
         if (err) return res.serverError(err);
-        we.log.info('AuthController:login: user autheticated:', user.id, user.username);
+        we.log.info('AuthController:login: user autheticated:', {
+          id: user.id,
+          username: user.username
+        });
 
         if (err) {
-          we.log.error('logIn error: ', err);
+          we.log.error('logIn error: ', { error: err });
           return res.serverError(err);
         }
 
@@ -295,13 +315,20 @@ module.exports = {
     we.db.models.authtoken
     .validAuthToken(user.id, token, (err, result, authToken)=> {
       if (err) {
-        we.log.error('auth:activate: Error on validate token: ', err, token, user.id);
+        we.log.error('auth:activate: Error on validate token: ', {
+          error: err,
+          token: token,
+          id: user.id
+        });
         return responseForbiden();
       }
 
       // token is invalid
       if (!result) {
-        we.log.info('auth:activate: invalid token: ', token, user.id);
+        we.log.info('auth:activate: invalid token: ', {
+          token,
+          id: user.id
+        });
         return responseForbiden();
       }
 
@@ -311,13 +338,17 @@ module.exports = {
       .then( (usr)=> {
         // user found
         if (!usr) {
-          we.log.error('auth:activate: user not found: ', user.id);
+          we.log.error('auth:activate: user not found: ', {
+            id: user.id
+          });
           // user not found
           return res.badRequest();
         }
 
         if (usr.blocked) {
-          we.log.warn('auth.user.blocked.on.activate', usr.id);
+          we.log.warn('auth.user.blocked.on.activate', {
+            id: usr.id
+          });
           res.addMessage('danger', 'user.blocked');
           return res.goTo('/');
         }
@@ -332,12 +363,16 @@ module.exports = {
           authToken
           .destroy()
           .catch( (err)=> {
-            if (err) we.log.error('Error on delete token', err);
+            if (err) we.log.error('Error on delete token', {
+              error: err
+            });
           });
           // login and redirect the user
           we.auth.logIn(req, res, usr, (err)=> {
             if (err) {
-              we.log.error('logIn error:', err);
+              we.log.error('logIn error:', {
+                error: err
+              });
               return res.serverError(err);
             }
 
@@ -378,12 +413,18 @@ module.exports = {
     .findOne({ where: { email: email }})
     .then( (user)=> {
       if (!user) {
-        return res.badRequest('auth.forgot-password.user.not-found', email);
+        return res.badRequest('auth.forgot-password.user.not-found', {
+          email
+        });
       }
 
       if (user.blocked) {
-        we.log.warn('auth.user.blocked.on.forgotPassword', user.id);
-        return res.badRequest('auth.forgot-password.user.not-found', user.id);
+        we.log.warn('auth.user.blocked.on.forgotPassword', {
+          id: user.id
+        });
+        return res.badRequest('auth.forgot-password.user.not-found', {
+          id: user.id
+        });
       }
 
       we.db.models.authtoken
@@ -423,10 +464,14 @@ module.exports = {
           we.email
           .sendEmail('AuthResetPasswordEmail', options, templateVariables, (err , emailResp)=> {
             if (err) {
-              we.log.error('Error on send email AuthResetPasswordEmail', { err, emailResp});
-              return res.serverError()
+              we.log.error('Error on send email AuthResetPasswordEmail', {
+                err, emailResp
+              });
+              return res.serverError();
             }
-            we.log.verbose('AuthResetPasswordEmail: Email resp:', emailResp)
+            we.log.verbose('AuthResetPasswordEmail: Email resp:', {
+              emailResp
+            });
           });
 
           res.locals.emailSend = true
@@ -435,8 +480,6 @@ module.exports = {
         res.addMessage('success', 'auth.forgot-password.email.send');
         res.ok();
       });
-
-      return null;
     })
     .catch(res.queryError)
   },
@@ -509,7 +552,9 @@ module.exports = {
         ( authToken.userId != user.id )
        )  {
 
-        we.log.info('changePasswordWithToken: Token is invalid', { user, authToken });
+        we.log.info('changePasswordWithToken: Token is invalid', {
+          user, authToken
+        });
         return res.badRequest('changePasswordWithToken.token.is.invalid');
       }
 
@@ -549,7 +594,9 @@ module.exports = {
       if (!user) return res.badRequest('unknow error trying to find a user');
 
       if (user.blocked) {
-        we.log.warn('auth.user.blocked.on.authtoken', user.id);
+        we.log.warn('auth.user.blocked.on.authtoken', {
+          id: user.id
+        });
         res.addMessage('danger', 'user.blocked');
         return res.goTo('/');
       }
@@ -565,7 +612,6 @@ module.exports = {
         }
 
         res.json(token.getResetUrl());
-        return null;
       })
     })
     .catch(req.queryError);
@@ -646,17 +692,13 @@ module.exports = {
             req.session.resetPassword = true;
 
             res.goTo( '/auth/' + user.id + '/new-password');
-
-            return null;
           })
           .catch( (err)=> {
-            if (err) we.log.error('auth:consumeForgotPasswordToken: Error on destroy token:', err);
-
-            return null;
+            if (err) we.log.error('auth:consumeForgotPasswordToken: Error on destroy token:', {
+              error: err
+            });
           })
-        })
-
-        return null;
+        });
       }
     })
   },
@@ -718,10 +760,7 @@ module.exports = {
         res.locals.successfully = true;
 
         res.ok();
-        return null;
       });
-
-      return null;
     })
     .catch(res.queryError);
   },
@@ -787,7 +826,9 @@ module.exports = {
         // set newPassword and save it for generate the password hash on update
         user.updatePassword(newPassword, (err)=> {
           if(err) {
-            we.log.error('Error on save user to update password: ', err);
+            we.log.error('Error on save user to update password: ', {
+              error: err
+            });
             return res.serverError(err);
           }
           if (we.config.session && req.session) {
@@ -822,14 +863,16 @@ module.exports = {
 
             we.email.sendEmail('AuthChangePasswordEmail', options, templateVariables, (err , emailResp)=> {
               if (err) {
-                we.log.error('Error on send email AuthChangePasswordEmail', err, emailResp);
+                we.log.error('Error on send email AuthChangePasswordEmail', {
+                  error: err,
+                  emailResp
+                });
               }
 
             });
           }
 
           res.addMessage('success', 'auth.change-password.success');
-
           return res.ok();
         })
       }
@@ -867,8 +910,6 @@ function loadUserAndAuthToken(we, uid, token, callback) {
       } else {
         callback(null, user, null);
       }
-
-      return null;
     });
   })
   .catch(callback);
